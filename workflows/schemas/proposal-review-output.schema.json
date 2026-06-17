@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProposalReviewOutput",
+  "description": "Output payload for the Ethana Proposal Review skill. Represents the serialized Release Decision (Section 10). This payload is the machine-readable Release Audit Certificate and is required by the Ethana Proposal Agent before routing any document for client delivery.",
+  "type": "object",
+  "required": [
+    "pcs",
+    "ctcs",
+    "classification",
+    "cfb_count",
+    "mrf_count",
+    "minor_count",
+    "traceability_gate_passed"
+  ],
+  "properties": {
+    "pcs": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Proposal Compliance Score. 100 base minus (CFB auto-reject override) minus (MRF count x 5) minus (Minor count x 1). Set to 0 automatically if any CFB is present."
+    },
+    "ctcs": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Claim Traceability Coverage Score. (Traced + (Partially Traced x 0.5)) / Total Claims x 100."
+    },
+    "classification": {
+      "type": "string",
+      "enum": ["Approved", "Approved with Revisions", "Conditional Release", "Rejected"],
+      "description": "Release Classification. Automatically Rejected if any CFB is present, regardless of PCS or CTCS."
+    },
+    "cfb_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of Critical Firewall Breaches detected. Any value > 0 forces classification = Rejected."
+    },
+    "mrf_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of Major Risk Findings detected. Each carries a -5 PCS deduction."
+    },
+    "minor_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of Minor Risk Findings detected. Each carries a -1 PCS deduction."
+    },
+    "traceability_gate_passed": {
+      "type": "boolean",
+      "description": "True only if TG-1, TG-2, TG-3, and TG-7 all passed. A false value means the review is incomplete and the classification is invalid."
+    },
+    "document_reviewed": {
+      "type": "string",
+      "description": "Name, client, and date of the document reviewed."
+    },
+    "review_date": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO 8601 date the review was completed."
+    },
+    "total_claims_audited": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of Ethana capability claims catalogued in Section 2."
+    },
+    "traced_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of claims with Traced status."
+    },
+    "partially_traced_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of claims with Partially Traced status. Each contributes 0.5 to the CTCS numerator."
+    },
+    "untraced_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of claims with Untraced status. Contributes 0 to CTCS."
+    },
+    "prohibited_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of claims with Prohibited status. Contributes 0 to CTCS and triggers required removal."
+    },
+    "input_completeness": {
+      "type": "string",
+      "enum": ["Full", "Standard", "Minimal"],
+      "description": "Input completeness rating from Phase 1 Step 1.3. Determines CTCS ceiling."
+    },
+    "required_actions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Numbered list of required corrective actions before re-submission. Empty array for Approved classification."
+    },
+    "cfb_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of CFB IDs (e.g. ['CFB-001', 'CFB-002']) from Section 8."
+    },
+    "mrf_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of MRF IDs (e.g. ['MRF-001']) from Section 9."
+    }
+  },
+  "additionalProperties": false
+}

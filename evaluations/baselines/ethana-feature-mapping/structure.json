@@ -1,0 +1,26 @@
+{
+  "skill_name": "ethana-feature-mapping",
+  "pass_threshold": 85,
+  "required_headers": [
+    "## 1. Feature Validation Table",
+    "## 2. Technical Fit Summary",
+    "## 3. Integration Compatibility Assessment",
+    "## 4. Technical Constraints and Caveats",
+    "## 5. POC Feature Set",
+    "## 6. Prohibited Feature Claims Register",
+    "## 7. Substitution Analysis",
+    "## 8. Evidence References",
+    "## 9. Technical Proposal Language",
+    "## 10. Technical Summary"
+  ],
+  "required_tables": [
+    {
+      "preceding_header": "## 1. Feature Validation Table",
+      "required_columns": ["Feature", "Status", "TFS"]
+    },
+    {
+      "preceding_header": "## 8. Evidence References",
+      "required_columns": ["Claim", "Source", "Section"]
+    }
+  ]
+}

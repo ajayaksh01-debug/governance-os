@@ -27,7 +27,7 @@ def get_agent_definitions(repo_root):
             "target_level": 3
         },
         "Ethana Proposal Agent": {
-            "required_skills": ["regulatory-mapping", "governance-control-mapping", "ethana-solution-mapping", "ethana-feature-mapping", "proposal-review"],
+            "required_skills": ["regulatory-mapping", "governance-control-mapping", "ethana-solution-mapping", "ethana-feature-mapping", "ethana-proposal-review"],
             "required_workflows": ["workflows/proposal-development-workflow.md"],
             "target_level": 3
         }
@@ -62,12 +62,15 @@ def certify_agent(repo_root, agent_name, spec):
         return 1, f"Skills complete, but missing workflow files: {missing_workflows}"
         
     # Level 3: Evaluations Passing
-    # For Level 3, check if baseline and scripts exist
+    # For Level 3, check if baseline exists in either format:
+    #   - Legacy directory format: evaluations/baselines/{skill}/
+    #   - Flat .md format:         evaluations/baselines/{skill}-baseline.md
     baselines_dir = repo_root / "evaluations" / "baselines"
     missing_baselines = []
     for skill in required_skills:
         base_path = baselines_dir / skill
-        if not base_path.exists():
+        flat_md = baselines_dir / f"{skill}-baseline.md"
+        if not base_path.exists() and not flat_md.exists():
             missing_baselines.append(skill)
             
     if missing_baselines:

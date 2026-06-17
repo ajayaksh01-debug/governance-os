@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Iso42001GapAssessmentInput",
+  "description": "Input payload for the ISO 42001 Gap Assessment skill. Requires an organisation description, AI portfolio in scope, and jurisdictions. Regulatory Mapping Section 2 output is strongly recommended to pre-populate applicable ISO 42001 clauses.",
+  "type": "object",
+  "required": [
+    "organisation_description",
+    "ai_portfolio",
+    "jurisdictions"
+  ],
+  "properties": {
+    "organisation_description": {
+      "type": "string",
+      "description": "Description of the organisation — sector, size, AI use cases, and the governance programme context driving the assessment."
+    },
+    "ai_portfolio": {
+      "type": "array",
+      "description": "List of AI systems in scope for the AIMS. Each entry should name the system, its function, and its deployment status.",
+      "items": {
+        "type": "object",
+        "required": ["system_name", "function"],
+        "properties": {
+          "system_name": { "type": "string" },
+          "function": { "type": "string" },
+          "deployment_status": {
+            "type": "string",
+            "enum": ["Development", "Testing", "Production", "Retired", "Planned"]
+          },
+          "risk_classification": { "type": "string" },
+          "vendor": { "type": "string" }
+        }
+      },
+      "minItems": 1
+    },
+    "jurisdictions": {
+      "type": "array",
+      "description": "Jurisdictions in scope for the assessment. Shapes regulatory overlay applied in Section 2 and Section 9.",
+      "items": {
+        "type": "string",
+        "enum": ["EU", "UK", "India", "US", "Singapore", "Other"]
+      },
+      "minItems": 1
+    },
+    "regulatory_mapping_output": {
+      "type": "object",
+      "description": "Strongly recommended. Full output from skills/regulatory-mapping/. Section 2 (Applicable Governance Frameworks) pre-populates ISO 42001 clauses and Annex A controls identified as relevant. Section 6 (Control Requirements) maps to specific Annex A controls. Without this input, clause identification proceeds from scratch.",
+      "properties": {
+        "applicable_governance_frameworks": { "type": "object" },
+        "control_requirements": { "type": "array" }
+      }
+    },
+    "control_mapping_output": {
+      "type": "object",
+      "description": "Recommended. Full output from skills/governance-control-mapping/. Section 3 (Control Coverage Classification) identifies which controls are already designed and covered — prevents duplication in the Gap Register.",
+      "properties": {
+        "control_taxonomy_matrix": { "type": "array" },
+        "ethana_configuration_guide": { "type": "array" }
+      }
+    },
+    "existing_documentation": {
+      "type": "array",
+      "description": "Documentation the organisation already holds that may satisfy ISO 42001 requirements — ISO 27001 certificate, SOC 2 report, existing AI policy, prior gap assessment results, board-level AI ethics statement.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "document_type": { "type": "string" },
+          "description": { "type": "string" },
+          "date": { "type": "string" },
+          "scope": { "type": "string" }
+        }
+      }
+    },
+    "target_certification": {
+      "type": "string",
+      "enum": ["Third-party certification", "Self-declaration", "Internal audit only", "Regulatory submission"],
+      "description": "The target outcome of the assessment. Third-party certification applies the strictest evidence standards. Shapes ARS severity calibration and Section 9 audit readiness verdict."
+    },
+    "industry": {
+      "type": "string",
+      "enum": ["BFSI", "Healthcare", "Government", "Critical Infrastructure", "Retail", "Technology", "General Enterprise"],
+      "description": "Industry sector. BFSI triggers SR 11-7 / PRA SS1/23 model risk overlay on top of standard clause assessment."
+    },
+    "current_maturity_baseline": {
+      "type": "object",
+      "description": "Prior assessment results if available. Used to measure progress between assessments rather than starting from baseline zero.",
+      "properties": {
+        "assessment_date": { "type": "string", "format": "date" },
+        "ams_score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "ars_score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "critical_gaps_at_baseline": { "type": "integer" }
+      }
+    }
+  },
+  "additionalProperties": false
+}

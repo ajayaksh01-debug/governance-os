@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Iso42001GapAssessmentOutput",
+  "description": "Output payload for the ISO 42001 Gap Assessment skill. Represents the serialized Overall Maturity Score (Section 10) and is required by the Client Assessment Agent before routing to Governance Control Mapping or audit preparation workflows.",
+  "type": "object",
+  "required": [
+    "ams",
+    "ars",
+    "critical_gaps",
+    "major_gaps",
+    "minor_gaps",
+    "certification_classification",
+    "months_to_readiness"
+  ],
+  "properties": {
+    "ams": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "AIMS Maturity Score. Weighted combination: 60% clause maturity (Cl.4–10 averaged and normalized) + 40% Annex A control coverage (implemented + partially-implemented×0.5 / total applicable × 100)."
+    },
+    "ars": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Audit Readiness Score. Composite: Documentation Completeness (30%) + Evidence Availability (40%) + Control Operationalization (20%) + Management Review Readiness (10%). Each component scored 0–100."
+    },
+    "critical_gaps": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of Critical-severity gaps in the Gap Register. Any Critical gap prevents Certification Ready classification."
+    },
+    "major_gaps": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of Major-severity gaps in the Gap Register."
+    },
+    "minor_gaps": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of Minor-severity gaps in the Gap Register."
+    },
+    "certification_classification": {
+      "type": "string",
+      "enum": ["Certification Ready", "Near Ready", "Significant Gaps", "Major Gaps"],
+      "description": "Overall certification readiness classification. Certification Ready requires AMS >= 80 AND ARS >= 75 AND 0 Critical Gaps. Near Ready: AMS 60–79 OR ARS 60–74 OR 1–2 Critical Gaps with documented closure plan. Significant Gaps: AMS 40–59 OR 3–5 Critical Gaps. Major Gaps: AMS < 40 OR 6+ Critical Gaps."
+    },
+    "months_to_readiness": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Estimated months until the organisation could reasonably schedule a Stage 1 certification audit, based on the Gap Register and Remediation Roadmap. 0 means ready now. Null if assessment scope is internal-only."
+    },
+    "assessment_date": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO 8601 date the assessment was completed."
+    },
+    "aims_scope": {
+      "type": "string",
+      "description": "The defined scope of the AI Management System assessed — organisation units, AI systems, and geographic boundaries."
+    },
+    "ams_clause_scores": {
+      "type": "object",
+      "description": "Per-clause maturity scores (0–5) used to compute AMS.",
+      "properties": {
+        "clause_4": { "type": "number", "minimum": 0, "maximum": 5 },
+        "clause_5": { "type": "number", "minimum": 0, "maximum": 5 },
+        "clause_6": { "type": "number", "minimum": 0, "maximum": 5 },
+        "clause_7": { "type": "number", "minimum": 0, "maximum": 5 },
+        "clause_8": { "type": "number", "minimum": 0, "maximum": 5 },
+        "clause_9": { "type": "number", "minimum": 0, "maximum": 5 },
+        "clause_10": { "type": "number", "minimum": 0, "maximum": 5 }
+      }
+    },
+    "ars_component_scores": {
+      "type": "object",
+      "description": "Per-component scores (0–100) used to compute ARS.",
+      "properties": {
+        "documentation_completeness": { "type": "number", "minimum": 0, "maximum": 100 },
+        "evidence_availability": { "type": "number", "minimum": 0, "maximum": 100 },
+        "control_operationalization": { "type": "number", "minimum": 0, "maximum": 100 },
+        "management_review_readiness": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    },
+    "annex_a_coverage": {
+      "type": "object",
+      "description": "Annex A control coverage summary.",
+      "properties": {
+        "implemented": { "type": "integer" },
+        "partially_implemented": { "type": "integer" },
+        "not_implemented": { "type": "integer" },
+        "not_applicable": { "type": "integer" },
+        "total_applicable": { "type": "integer" }
+      }
+    },
+    "gap_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of all Gap IDs from the Gap Register (e.g. ['GAP-CL8-001', 'GAP-AA3-001'])."
+    },
+    "critical_gap_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Subset of gap_ids with Critical severity — must all be closed before Certification Ready is achievable."
+    },
+    "ethana_claims_firewall_violations": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of Claims Firewall violations found in Section 8.5. Any value > 0 triggers HD2 on the assessment output."
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,26 @@
+{
+  "skill_name": "ethana-solution-mapping",
+  "pass_threshold": 70,
+  "required_headers": [
+    "## 1. Requirement Coverage Map",
+    "## 2. Coverage Confidence Summary",
+    "## 3. Proposal-Safe Platform Capabilities",
+    "## 4. Roadmap Disclosure",
+    "## 5. Prohibited Claims Register",
+    "## 6. Cursory Bridge Recommendations",
+    "## 7. Gap Register",
+    "## 8. Competitive Positioning",
+    "## 9. Recommended Commercial Motion",
+    "## 10. Customer-Facing Executive Summary"
+  ],
+  "required_tables": [
+    {
+      "preceding_header": "## 1. Requirement Coverage Map",
+      "required_columns": ["Requirement", "Capability", "Status", "CCS", "Disposition"]
+    },
+    {
+      "preceding_header": "## 7. Gap Register",
+      "required_columns": ["Requirement", "Why it is a gap", "Best available alternative"]
+    }
+  ]
+}

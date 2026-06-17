@@ -60,21 +60,37 @@ def parse_markdown(md_path):
     return headers, tables
 
 def run_regression_test(target_path, baseline_path):
-    """Runs a structural regression test against a baseline configuration JSON."""
+    """Runs a structural regression test against a baseline configuration JSON or Markdown file."""
     if not baseline_path.exists():
         print(f"Error: Baseline file not found at {baseline_path}", file=sys.stderr)
         return ["Baseline config file missing"]
 
-    try:
-        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
-    except Exception as e:
-        return [f"Error parsing baseline JSON: {e}"]
+    content = baseline_path.read_text(encoding="utf-8")
+    if baseline_path.suffix == ".md":
+        # Extract all json code blocks from markdown
+        json_blocks = re.findall(r"```json\s*(.*?)\s*```", content, re.DOTALL)
+        if not json_blocks:
+            return [f"Error: No JSON code blocks found in markdown baseline {baseline_path}"]
+        
+        baseline = {}
+        for block in json_blocks:
+            try:
+                obj = json.loads(block)
+                if isinstance(obj, dict):
+                    baseline.update(obj)
+            except Exception as e:
+                return [f"Error parsing embedded JSON in markdown: {e}"]
+    else:
+        try:
+            baseline = json.loads(content)
+        except Exception as e:
+            return [f"Error parsing baseline JSON: {e}"]
 
     headers, tables = parse_markdown(target_path)
     errors = []
 
     # 1. Validate Required Headers
-    required_headers = baseline.get("required_headers", [])
+    required_headers = baseline.get("required_headers", []) or baseline.get("required_sections", [])
     for req_hdr in required_headers:
         # Search for exact or substring match in parsed headers
         match_found = any(req_hdr in h for h in headers)

@@ -1,0 +1,26 @@
+{
+  "skill_name": "ai-incident-analysis",
+  "pass_threshold": 70,
+  "required_headers": [
+    "## 1. Incident Summary",
+    "## 2. Root Cause Analysis",
+    "## 3. Risk Category",
+    "## 4. Control Failures",
+    "## 5. Applicable Frameworks",
+    "## 6. Regulatory Implications",
+    "## 7. BFSI Impact",
+    "## 8. Lessons Learned",
+    "## 9. Recommended Controls",
+    "## 10. Executive Summary"
+  ],
+  "required_tables": [
+    {
+      "preceding_header": "## 4. Control Failures",
+      "required_columns": ["Control", "Type", "Failure Mode", "Description"]
+    },
+    {
+      "preceding_header": "## 9. Recommended Controls",
+      "required_columns": ["Control", "Description", "Complexity", "Priority", "Framework Reference"]
+    }
+  ]
+}

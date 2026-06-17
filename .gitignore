@@ -1,1 +1,19 @@
 .DS_Store
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# macOS
+.DS_Store
+
+# Claude / Gemini artifacts
+.claude/
+.gemini/
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env

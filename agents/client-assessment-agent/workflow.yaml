@@ -1,0 +1,1324 @@
+# Client Assessment Agent — Workflow Specification
+# Version: 1.0-spec
+# Status: Specification — implementation blocked (see AGENT.md Section 14)
+# Supersedes: workflows/governance-assessment-workflow.md (4-skill version)
+
+agent:
+  name: client-assessment-agent
+  version: "1.0-spec"
+  traceability_id_format: "TR-CA-{YYYY}-{NNNN}"
+  skill_chain_length: 6
+  human_approval_gates: 4
+  claims_firewall_enforced_after_skills: [2, 3, 4, 5, 6]
+
+# ---------------------------------------------------------------------------
+# OPERATIONAL MODES
+# ---------------------------------------------------------------------------
+
+modes:
+  mode_a:
+    name: Full Assessment
+    description: Complete 6-skill chain; all 4 human approval gates mandatory
+    triggers:
+      - new_client_onboarding
+      - annual_governance_audit
+      - certification_readiness_check
+      - pre_proposal_assessment
+    prior_run_required: false
+
+  mode_b:
+    name: Incremental Re-Assessment
+    description: >
+      Loads prior assessment from Client Memory as context. Skill outputs
+      are delta-based. Requires a prior completed run for this client.
+    triggers:
+      - regulatory_change_impact
+      - annual_governance_audit  # allowed in mode_b if prior run exists
+    prior_run_required: true
+    prior_run_field: prior_assessment_id
+    prior_run_format: "TR-CA-{YYYY}-{NNNN}"
+
+# ---------------------------------------------------------------------------
+# INPUT SCHEMA
+# ---------------------------------------------------------------------------
+
+input_schema:
+  required:
+    traceability_id:
+      type: string
+      description: Auto-generated at intake; format TR-CA-{YYYY}-{NNNN}
+      auto_generated: true
+
+    trigger_type:
+      type: enum
+      values:
+        - new_client_onboarding
+        - annual_governance_audit
+        - certification_readiness_check
+        - regulatory_change_impact
+        - pre_proposal_assessment
+
+    client_name:
+      type: string
+      description: Unique client identifier; links run to Client Memory
+
+    client_ai_portfolio:
+      type: string
+      min_length: 100
+      description: >
+        Inventory of deployed/planned AI systems: what each system does,
+        who it affects, deployment status, system owner.
+      quality_check:
+        minimum_systems: 1
+        requires_deployment_status: true
+        failure_action: warn  # does not block intake
+
+    existing_policies:
+      type: string
+      description: >
+        Description of existing AI governance documentation:
+        AI policy, risk register, control evidence, prior assessments.
+
+    target_framework:
+      type: enum
+      values:
+        - ISO 42001
+        - NIST AI RMF
+        - ISO 42001 + NIST
+        - Custom Baseline
+      notes:
+        Custom Baseline: triggers warning that ISO 42001 scoring will use partial criteria
+
+    target_maturity_level:
+      type: enum
+      values: [L1, L2, L3, L4, L5]
+
+    jurisdictions:
+      type: array
+      items:
+        type: enum
+        values: [EU, UK, India]
+      min_items: 1
+      validation:
+        unsupported_value_action: halt
+        halt_state: HALTED_INTAKE_UNSUPPORTED_JURISDICTION
+
+  optional:
+    industry:
+      type: string
+      notes: Activates BFSI overlays in RM, GCM, ISO 42001, and solution mapping
+
+    data_types:
+      type: array
+      items: string
+      notes: Affects GDPR/DPDP applicability in regulatory mapping
+
+    deployment_model:
+      type: enum
+      values: [Cloud SaaS, VPC, On-premises]
+      notes: On-premises triggers mandatory scale caveat in solution mapping
+
+    existing_tooling:
+      type: array
+      items: string
+      notes: Surfaced to GCM Phase 1.2 and solution mapping for integration design
+
+    target_certification:
+      type: enum
+      values:
+        - Third-party certification
+        - Self-declaration
+        - Internal audit only
+        - Regulatory submission
+      notes: Shapes ISO 42001 ARS calibration strictness
+
+    prior_assessment_id:
+      type: string
+      format: "TR-CA-{YYYY}-{NNNN}"
+      required_when: trigger_type == regulatory_change_impact
+
+    regulatory_change_summary:
+      type: string
+      required_when: trigger_type == regulatory_change_impact
+      notes: Appended to RM subject_description
+
+    output_mode:
+      type: enum
+      values: [Formal Proposal, RFP Response, Governance Assessment]
+      default: Governance Assessment
+
+    competitive_context:
+      type: string
+      notes: Surfaced to solution mapping Section 8
+
+# ---------------------------------------------------------------------------
+# INPUT VALIDATION RULES
+# ---------------------------------------------------------------------------
+
+input_validation:
+  V-01:
+    description: All required fields are present and non-empty
+    failure_state: HALTED_INTAKE_INVALID
+    failure_action: Halt; list missing fields in error message
+
+  V-02:
+    description: jurisdictions contains only EU, UK, India
+    failure_state: HALTED_INTAKE_UNSUPPORTED_JURISDICTION
+    failure_action: Halt; escalate to Compliance Analyst with unsupported value
+
+  V-03:
+    description: client_ai_portfolio identifies at least one AI system with deployment status
+    failure_state: None (warn only)
+    failure_action: Log quality warning; continue with reduced evidence quality rating
+
+  V-04:
+    description: target_framework is a supported value
+    failure_state: None for Custom Baseline
+    failure_action: Log warning that ISO 42001 scoring uses partial criteria
+
+  V-05:
+    description: For Mode B — prior_assessment_id resolves to a completed run in Client Memory
+    failure_state: HALTED_INTAKE_INVALID
+    failure_action: Halt; operator must initiate Mode A for this client
+
+  V-06:
+    description: For regulatory_change_impact trigger — regulatory_change_summary is present
+    failure_state: HALTED_INTAKE_INVALID
+    failure_action: Halt; list missing field
+
+# ---------------------------------------------------------------------------
+# SKILL SEQUENCE
+# ---------------------------------------------------------------------------
+
+skill_sequence:
+
+  # -------------------------------------------------------------------------
+  # SKILL 1: REGULATORY MAPPING
+  # -------------------------------------------------------------------------
+  step_1:
+    skill: regulatory-mapping
+    run_state: SKILL_1_RUNNING
+    complete_state: SKILL_1_COMPLETE
+    gate_state: GATE_1_PASSED
+
+    input_mapping:
+      subject_description:
+        sources:
+          - field: client_ai_portfolio
+          - field: existing_policies
+            transform: prefix("Existing governance context: ")
+          - field: regulatory_change_summary
+            condition: trigger_type == regulatory_change_impact
+            transform: prefix("Regulatory change re-assessment context: ")
+        combine: concatenate_with_newline
+
+      subject_type:
+        value: AI Portfolio
+
+      jurisdictions:
+        field: jurisdictions
+
+      industry:
+        field: industry
+        default: "General Enterprise"
+
+      data_types:
+        field: data_types
+
+      deployment_model:
+        field: deployment_model
+
+    outputs:
+      markdown: "{traceability_id}-regulatory-scoping-matrix.md"
+      json: "{traceability_id}-regulatory-mapping-payload.json"
+      stored_as: run_memory.skill_1_output
+
+    gates:
+      gate_1a:
+        name: RM Schema Validation
+        tool: workflow_validator.py
+        command: >
+          python3 evaluations/scripts/workflow_validator.py
+          --schema workflows/schemas/regulatory_mapping_output.json
+          --output {traceability_id}-regulatory-mapping-payload.json
+        threshold: 0 schema errors
+        on_failure:
+          retry: true
+          max_retries: 1
+          retry_strategy: augment_prompt_with_errors
+          post_retry_failure_state: HALTED_GATE_1_SCHEMA
+          post_retry_failure_action: escalate_to_compliance_analyst
+
+      gate_2a:
+        name: RM Score Threshold
+        tool: evaluation rubric
+        threshold: 70
+        bands:
+          preliminary:
+            range: [55, 69]
+            failure_state: HALTED_GATE_1_SCORE_PRELIMINARY
+            failure_action: revision_request_with_failing_dimensions
+          insufficient:
+            range: [0, 54]
+            failure_state: HALTED_GATE_1_SCORE_INSUFFICIENT
+            failure_action: escalate_to_compliance_analyst
+        pass_state: GATE_1_PASSED
+
+    pre_execution_check:
+      none: "No checks required for first skill"
+
+  # -------------------------------------------------------------------------
+  # APPROVAL GATE 1
+  # -------------------------------------------------------------------------
+  approval_gate_1:
+    id: AG-1
+    name: Regulatory Scoping Review
+    triggered_after: GATE_1_PASSED
+    approver: General Counsel (or designated Compliance Lead)
+    timeout_days: 5
+    pending_state: APPROVAL_1_PENDING
+    approved_state: APPROVAL_1_APPROVED
+
+    payload:
+      - "{traceability_id}-regulatory-scoping-matrix.md"
+      - gate_2a_score_breakdown
+      - evidence_quality_rating
+      - conditional_applicability_flags
+      - eu_ai_act_annex_iii_ambiguities
+
+    scope: >
+      The regulatory applicability and risk classification are accurate.
+      Obligations are correctly identified. Does not approve control design.
+
+    actions:
+      Approve: transitions to APPROVAL_1_APPROVED → SKILL_2_RUNNING
+      Approve with notes:
+        transitions_to: APPROVAL_1_APPROVED
+        effect: ag1_notes appended to GCM input prompt as additional context
+      Reject with revision request:
+        transitions_to: HALTED_APPROVAL_1_REJECTED
+
+    timeout_action:
+      state: APPROVAL_TIMED_OUT
+      notify: Compliance Analyst
+      resolution: extend_deadline or initiate_revised_run
+
+  # -------------------------------------------------------------------------
+  # SKILL 2: GOVERNANCE CONTROL MAPPING
+  # -------------------------------------------------------------------------
+  step_2:
+    skill: governance-control-mapping
+    run_state: SKILL_2_RUNNING
+    complete_state: SKILL_2_COMPLETE
+    gate_state: GATE_2_PASSED
+
+    pre_execution_check:
+      check: run_memory.skill_1_output.applicable_regulations[*].control_requirements is non-empty
+      on_failure:
+        state: HALTED_GATE_1_SCORE_INSUFFICIENT
+        action: Escalate — no obligations found to map
+
+    input_mapping:
+      upstream_payload:
+        source: run_memory.skill_1_output
+        format: full_json
+
+      upstream_source_type:
+        value: "Regulatory Mapping"
+
+      traceability_id:
+        source: run.traceability_id
+
+      target_maturity_level:
+        field: target_maturity_level
+
+      jurisdictions:
+        field: jurisdictions
+
+      client_sector:
+        field: industry
+        default: "General Enterprise"
+
+      infrastructure_model:
+        field: deployment_model
+
+      existing_tooling:
+        field: existing_tooling
+
+      additional_context:
+        source: run_memory.ag1_notes
+        condition: ag1_notes is present
+
+    outputs:
+      markdown: "{traceability_id}-operational-control-spec.md"
+      json: "{traceability_id}-control-mapping-payload.json"
+      stored_as: run_memory.skill_2_output
+
+    gates:
+      gate_2b:
+        name: GCM Schema Validation
+        tool: workflow_validator.py
+        command: >
+          python3 evaluations/scripts/workflow_validator.py
+          --schema workflows/schemas/control_mapping_output.json
+          --output {traceability_id}-control-mapping-payload.json
+        threshold: 0 schema errors
+        on_failure:
+          retry: true
+          max_retries: 1
+          retry_strategy: augment_prompt_with_errors
+          post_retry_failure_state: HALTED_GATE_2_SCHEMA
+          post_retry_failure_action: escalate_to_compliance_analyst
+
+      gate_2c:
+        name: GCM Claims Firewall
+        tool: claims_linter.py
+        command: >
+          python3 evaluations/scripts/claims_linter.py
+          {traceability_id}-operational-control-spec.md
+        threshold: 0 violations
+        non_bypassable: true
+        checked_sections:
+          - "Section 10: Ethana Configuration Guide"
+        on_failure:
+          retry: false
+          failure_state: HALTED_FIREWALL_BREACH_GCM
+          failure_action: auto_route_to_compliance_director
+          payload_includes:
+            - capability name
+            - canonical-product-model.md entry
+            - offending text in Section 10
+            - traceability_id
+
+      gate_2d:
+        name: GCM Score Threshold
+        tool: evaluation rubric
+        threshold: 85
+        bands:
+          below_threshold:
+            range: [70, 84]
+            failure_state: HALTED_GATE_2_SCORE_BELOW_THRESHOLD
+            failure_action: revision_request_with_per_section_breakdown
+          insufficient:
+            range: [0, 69]
+            failure_state: HALTED_GATE_2_SCORE_INSUFFICIENT
+            failure_action: escalate_to_compliance_analyst
+        pass_state: GATE_2_PASSED
+
+  # -------------------------------------------------------------------------
+  # SKILL 3: ETHANA SOLUTION MAPPING
+  # -------------------------------------------------------------------------
+  step_3:
+    skill: ethana-solution-mapping
+    run_state: SKILL_3_RUNNING
+    complete_state: SKILL_3_COMPLETE
+    gate_state: GATE_3_PASSED
+
+    input_mapping:
+      requirement_list:
+        source: run_memory.skill_2_output.section_10
+        description: GCM control specifications as the requirement set
+        supplement_with: run_memory.skill_2_output.full_json
+
+      upstream_skill_output:
+        source: run_memory.skill_2_output
+        format: full_json
+
+      customer_sector:
+        field: industry
+        default: "General Enterprise"
+
+      jurisdictions:
+        field: jurisdictions
+
+      output_mode:
+        field: output_mode
+        default: "Formal Proposal"
+
+      deployment_constraint:
+        field: deployment_model
+
+      existing_subscription:
+        field: existing_tooling
+
+      competitive_context:
+        field: competitive_context
+
+    outputs:
+      markdown: "{traceability_id}-solution-mapping-report.md"
+      json: "{traceability_id}-solution-mapping-payload.json"
+      stored_as: run_memory.skill_3_output
+
+    extracted_for_downstream:
+      ethana_capability_names_skill3:
+        from: section_3 and section_4
+        description: Unique Ethana capability names from Proposal-Safe Capabilities and Roadmap Disclosure
+        stored_as: run_memory.capability_names_from_skill3
+
+    gates:
+      gate_3a:
+        name: Solution Mapping Schema Validation
+        tool: workflow_validator.py
+        command: >
+          python3 evaluations/scripts/workflow_validator.py
+          --schema workflows/schemas/solution_mapping_output.json
+          --output {traceability_id}-solution-mapping-payload.json
+        threshold: 0 schema errors
+        on_failure:
+          retry: true
+          max_retries: 1
+          retry_strategy: augment_prompt_with_errors
+          post_retry_failure_state: HALTED_GATE_3_SCHEMA
+          post_retry_failure_action: escalate_to_compliance_analyst
+
+      gate_3b:
+        name: Solution Mapping Claims Firewall
+        tool: claims_linter.py
+        command: >
+          python3 evaluations/scripts/claims_linter.py
+          {traceability_id}-solution-mapping-report.md
+        threshold: 0 violations
+        non_bypassable: true
+        checked_sections:
+          - "Section 3: Proposal-Safe Platform Capabilities"
+          - "Section 4: Roadmap Disclosure"
+          - "Section 5: Prohibited Claims Register (verify all entries are labelled correctly)"
+        on_failure:
+          retry: false
+          failure_state: HALTED_FIREWALL_BREACH_SOLUTION
+          failure_action: auto_route_to_compliance_director
+          payload_includes:
+            - capability name
+            - canonical-product-model.md entry
+            - offending text with section reference
+            - traceability_id
+
+      gate_3c:
+        name: Solution Mapping Score Threshold
+        tool: evaluation rubric
+        threshold: 70
+        bands:
+          insufficient:
+            range: [0, 69]
+            failure_state: HALTED_GATE_3_SCORE_INSUFFICIENT
+            failure_action: escalate_to_compliance_analyst
+        pass_state: GATE_3_PASSED
+        notes: Single score band for solution mapping; no "below_threshold" revision path
+
+  # -------------------------------------------------------------------------
+  # APPROVAL GATE 2
+  # -------------------------------------------------------------------------
+  approval_gate_2:
+    id: AG-2
+    name: Control Design and Platform Coverage
+    triggered_after: GATE_3_PASSED
+    approvers:
+      - DPO
+      - CISO
+    joint_approval: true
+    timeout_days: 5
+    pending_state: APPROVAL_2_PENDING
+    approved_state: APPROVAL_2_APPROVED
+
+    payload:
+      - "{traceability_id}-operational-control-spec.md"
+      - "{traceability_id}-solution-mapping-report.md"
+      - gate_2d_score_breakdown_per_section
+      - gate_3c_score_breakdown
+      - claims_firewall_pass_confirmation_skill2
+      - claims_firewall_pass_confirmation_skill3
+      - raci_matrix_with_named_role_assignments
+      - section_10_ethana_configuration_guide_with_in_build_flagged
+
+    scope: >
+      The control specifications are implementable. The platform coverage
+      assessment is accurate. RACI assignments are accepted. The commercial
+      motion recommendation is appropriate.
+
+    actions:
+      Both Approve:
+        transitions_to: APPROVAL_2_APPROVED → SKILL_4_RUNNING
+      One Approve One Reject:
+        transitions_to: HALTED_APPROVAL_2_PARTIAL
+        action: conflict_resolution
+      Both Reject:
+        transitions_to: HALTED_APPROVAL_2_REJECTED
+
+    timeout_action:
+      state: APPROVAL_TIMED_OUT
+      notify: Compliance Analyst
+      resolution: extend_deadline or initiate_revised_run
+
+  # -------------------------------------------------------------------------
+  # SKILL 4: ISO 42001 GAP ASSESSMENT
+  # -------------------------------------------------------------------------
+  step_4:
+    skill: iso-42001-gap-assessment
+    run_state: SKILL_4_RUNNING
+    complete_state: SKILL_4_COMPLETE
+    gate_state: GATE_4_PASSED
+
+    input_mapping:
+      ai_portfolio:
+        field: client_ai_portfolio
+
+      organisation_description:
+        sources:
+          - field: client_name
+          - field: existing_policies
+        combine: concatenate_with_newline
+
+      jurisdictions:
+        field: jurisdictions
+
+      regulatory_mapping_output:
+        source: run_memory.skill_1_output
+        format: full_json
+        required_by_skill: strongly_recommended
+
+      control_mapping_output:
+        source: run_memory.skill_2_output
+        format: full_json
+        required_by_skill: recommended
+
+      existing_documentation:
+        field: existing_policies
+        description: ISO 27001 certificate, SOC 2 report, prior assessments
+
+      target_certification:
+        field: target_certification
+
+      industry:
+        field: industry
+
+      current_maturity_baseline:
+        source: client_memory.ams_ars_history.most_recent
+        condition: mode_b and client_memory.ams_ars_history exists
+        description: Prior AMS/ARS scores; enables gap-closure tracking
+
+    outputs:
+      markdown: "{traceability_id}-iso42001-gap-assessment.md"
+      json: "{traceability_id}-iso42001-gap-assessment-payload.json"
+      stored_as: run_memory.skill_4_output
+
+    extracted_for_downstream:
+      ethana_capability_names_skill4:
+        from: section_8
+        description: Ethana capabilities referenced in Section 8 Ethana Coverage Analysis
+        stored_as: run_memory.capability_names_from_skill4
+
+    gates:
+      gate_4a:
+        name: ISO 42001 Schema Validation
+        tool: workflow_validator.py
+        command: >
+          python3 evaluations/scripts/workflow_validator.py
+          --schema workflows/schemas/iso-42001-gap-assessment-output.schema.json
+          --output {traceability_id}-iso42001-gap-assessment-payload.json
+        threshold: 0 schema errors
+        on_failure:
+          retry: true
+          max_retries: 1
+          retry_strategy: augment_prompt_with_errors
+          post_retry_failure_state: HALTED_GATE_4_SCHEMA
+          post_retry_failure_action: escalate_to_compliance_analyst
+
+      gate_4b:
+        name: ISO 42001 Claims Firewall
+        tool: claims_linter.py
+        command: >
+          python3 evaluations/scripts/claims_linter.py
+          {traceability_id}-iso42001-gap-assessment.md
+        threshold: 0 violations
+        non_bypassable: true
+        checked_sections:
+          - "Section 8: Ethana Coverage Analysis"
+          - "Section 8.5: Claims Firewall Review"
+        on_failure:
+          retry: false
+          failure_state: HALTED_FIREWALL_BREACH_ISO
+          failure_action: auto_route_to_compliance_director
+          payload_includes:
+            - capability name
+            - canonical-product-model.md entry
+            - offending text in Section 8
+            - traceability_id
+
+      gate_4c:
+        name: ISO 42001 Score Threshold
+        tool: evaluation rubric
+        thresholds:
+          ams: 70
+          ars: 70
+          overall: 85
+        bands:
+          below_threshold:
+            range: [70, 84]
+            failure_state: HALTED_GATE_4_SCORE_BELOW_THRESHOLD
+            failure_action: revision_request_with_per_clause_breakdown
+          insufficient:
+            range: [0, 69]
+            failure_state: HALTED_GATE_4_SCORE_INSUFFICIENT
+            failure_action: escalate_to_compliance_analyst
+        pass_state: GATE_4_PASSED
+
+  # -------------------------------------------------------------------------
+  # APPROVAL GATE 3
+  # -------------------------------------------------------------------------
+  approval_gate_3:
+    id: AG-3
+    name: ISO 42001 Maturity Assessment
+    triggered_after: GATE_4_PASSED
+    approver: Client Risk Committee Lead
+    timeout_days: 5
+    pending_state: APPROVAL_3_PENDING
+    approved_state: APPROVAL_3_APPROVED
+
+    payload:
+      - "{traceability_id}-iso42001-gap-assessment.md"
+      - gate_4c_score_breakdown_ams_ars_certification_classification
+      - gap_register_critical_major_minor_counts
+      - maturity_roadmap_30_60_90_day_phases
+      - ethana_coverage_analysis_with_in_build_flagged
+      - claims_firewall_pass_confirmation_skill4
+
+    scope: >
+      The gap findings match the organisation's known control posture.
+      The maturity targets are realistic. The Certification Classification
+      reflects the organisation's true readiness.
+
+    actions:
+      Approve:
+        transitions_to: APPROVAL_3_APPROVED → SKILL_5_RUNNING
+      Approve with revisions to specific gap findings:
+        transitions_to: APPROVAL_3_APPROVED
+        effect: >
+          Named gap revision notes appended to Skill 5 input as additional context
+          and referenced in run log. Gap revisions do not re-trigger Gate 4.
+      Reject with revision request:
+        transitions_to: HALTED_APPROVAL_3_REJECTED
+      Partial (one of two joint approvers):
+        transitions_to: HALTED_APPROVAL_3_PARTIAL
+        action: conflict_resolution
+
+    timeout_action:
+      state: APPROVAL_TIMED_OUT
+      notify: Compliance Analyst
+      resolution: extend_deadline or initiate_revised_run
+
+  # -------------------------------------------------------------------------
+  # SKILL 5: ETHANA CAPABILITY VALIDATION
+  # -------------------------------------------------------------------------
+  step_5:
+    skill: ethana-capability-validation
+    run_state: SKILL_5_RUNNING
+    complete_state: SKILL_5_COMPLETE
+    gate_state: GATE_5_PASSED
+
+    execution_model: per_capability
+    description: >
+      One capability-validation execution per unique Ethana capability name
+      identified across the upstream chain. All outputs are collected as the
+      Capability Validation Report.
+
+    capability_extraction:
+      sources:
+        - run_memory.capability_names_from_skill3  # from GCM Section 10 + solution mapping
+        - run_memory.capability_names_from_skill4  # from ISO 42001 Section 8
+      deduplication: true
+      minimum: 1
+      on_empty:
+        state: HALTED_ESCALATION
+        action: escalate_to_compliance_analyst
+        note: No Ethana capabilities found in upstream outputs — unusual; investigate
+
+    input_mapping_per_capability:
+      capability_name:
+        source: extracted_capability_name
+
+      proposed_claim:
+        source: verbatim claim sentence from the skill output section where capability appeared
+        fallback: capability_name
+
+      claim_context:
+        value: Governance Assessment
+
+      requesting_team:
+        field: industry
+        default: General
+
+      jurisdiction:
+        field: jurisdictions
+
+    outputs:
+      markdown_combined: "{traceability_id}-capability-validation-report.md"
+      json_combined: "{traceability_id}-capability-validation-payload.json"
+      json_per_capability: "{traceability_id}-capval-{capability_slug}.json"
+      stored_as: run_memory.skill_5_output
+
+    gates:
+      gate_5a:
+        name: Capability Validation Schema Validation
+        tool: workflow_validator.py
+        command: >
+          python3 evaluations/scripts/workflow_validator.py
+          --schema workflows/schemas/ethana-capability-validation-output.schema.json
+          --output {traceability_id}-capval-{capability_slug}.json
+        applies_to: each per-capability output
+        threshold: 0 schema errors
+        on_failure:
+          retry: true
+          max_retries: 1
+          retry_strategy: augment_prompt_with_errors
+          post_retry_failure_state: HALTED_GATE_5_SCHEMA
+          post_retry_failure_action: escalate_to_compliance_analyst
+
+      gate_5b:
+        name: Capability Validation Claims Firewall
+        tool: claims_linter.py
+        command: >
+          python3 evaluations/scripts/claims_linter.py
+          {traceability_id}-capability-validation-report.md
+        threshold: 0 violations
+        non_bypassable: true
+        checked_sections:
+          - "All: ECS/CPL determinations; allowed vs. prohibited claims tables"
+        on_failure:
+          retry: false
+          failure_state: HALTED_FIREWALL_BREACH_CAPVAL
+          failure_action: auto_route_to_compliance_director
+          payload_includes:
+            - capability name
+            - validated_status from cap-val output
+            - offending claim text
+            - canonical-product-model.md entry
+            - traceability_id
+
+      gate_5c:
+        name: Capability Validation Score Threshold
+        tool: evaluation rubric
+        threshold: 90
+        notes: >
+          Highest per-run threshold in the chain. ECS < 90 is always escalated —
+          no auto-retry for capability validation failures.
+        on_failure:
+          escalation_condition: any_capability_ecs < 90 or escalation_required == true
+          failure_state: HALTED_GATE_5_SCORE_INSUFFICIENT
+          failure_action: escalate_to_compliance_analyst
+          payload_includes:
+            - capability name
+            - ECS score
+            - ecs_band
+            - contradictions_count
+            - escalation_required flag
+        pass_state: GATE_5_PASSED
+
+  # -------------------------------------------------------------------------
+  # SKILL 6: ETHANA PROPOSAL REVIEW
+  # -------------------------------------------------------------------------
+  step_6:
+    skill: ethana-proposal-review
+    run_state: SKILL_6_RUNNING
+    complete_state: SKILL_6_COMPLETE
+    gate_state: GATE_6_PASSED
+
+    input_mapping:
+      draft_proposal:
+        source: assembled_upstream_markdown
+        description: >
+          All five upstream markdown outputs concatenated as the draft proposal.
+          This is the Executive Assessment Package draft — not a commercial sales proposal.
+        order:
+          - "{traceability_id}-regulatory-scoping-matrix.md"
+          - "{traceability_id}-operational-control-spec.md"
+          - "{traceability_id}-solution-mapping-report.md"
+          - "{traceability_id}-iso42001-gap-assessment.md"
+          - "{traceability_id}-capability-validation-report.md"
+
+      solution_mapping_output:
+        source: run_memory.skill_3_output
+        format: full_json
+        required_by_skill: yes
+
+      feature_mapping_output:
+        value: null
+        required_by_skill: yes
+        architectural_constraint: >
+          ethana-feature-mapping is not part of the Client Assessment Agent's
+          6-skill chain. feature_mapping_output is passed as null. This limits
+          maximum achievable CTCS to approximately 85–90/100. See AGENT.md
+          Section 5.7.1 for rationale and mitigation.
+        forbidden: >
+          The agent must not fabricate or synthesise a feature_mapping_output.
+          null is the only valid value for this field in this agent's context.
+
+      capability_validation_output:
+        source: run_memory.skill_5_output
+        format: full_json
+        required_by_skill: strongly_recommended
+
+      regulatory_mapping_output:
+        source: run_memory.skill_1_output
+        format: full_json
+        required_by_skill: recommended
+
+      control_mapping_output:
+        source: run_memory.skill_2_output
+        format: full_json
+        required_by_skill: recommended
+
+      output_mode:
+        value: Governance Assessment
+
+      customer_sector:
+        field: industry
+
+      jurisdictions:
+        field: jurisdictions
+
+    outputs:
+      markdown: "{traceability_id}-proposal-review-certificate.md"
+      json: "{traceability_id}-proposal-review-payload.json"
+      stored_as: run_memory.skill_6_output
+
+    gates:
+      gate_6a:
+        name: Proposal Review Schema Validation
+        tool: workflow_validator.py
+        command: >
+          python3 evaluations/scripts/workflow_validator.py
+          --schema workflows/schemas/proposal-review-output.schema.json
+          --output {traceability_id}-proposal-review-payload.json
+        threshold: 0 schema errors
+        on_failure:
+          retry: true
+          max_retries: 1
+          retry_strategy: augment_prompt_with_errors
+          post_retry_failure_state: HALTED_GATE_6_SCHEMA
+          post_retry_failure_action: escalate_to_compliance_analyst
+
+      gate_6b:
+        name: Terminal Claims Firewall
+        tool: claims_linter.py
+        command: >
+          python3 evaluations/scripts/claims_linter.py
+          {traceability_id}-proposal-review-certificate.md
+        threshold: 0 violations
+        non_bypassable: true
+        hardest_fail: true
+        on_failure:
+          retry: false
+          failure_state: HALTED_FIREWALL_BREACH_TERMINAL
+          failure_action: auto_route_to_compliance_director_and_sales_director
+          recovery: >
+            No in-run recovery. Requires Compliance Director sign-off and a full
+            new run. Prior run is archived as HALTED.
+          payload_includes:
+            - capability name
+            - canonical-product-model.md entry
+            - offending claim text with section reference
+            - all previous firewall pass confirmations (to identify where breach originated)
+            - traceability_id
+
+      gate_6c:
+        name: Proposal Review Release Classification
+        tool: proposal review rubric
+        thresholds:
+          minimum_passing:
+            pcs: 80
+            ctcs: 80
+          approved:
+            pcs: 95
+            ctcs: 95
+            note: Not achievable without feature_mapping_output; maximum per this chain ~90/100
+          conditional:
+            pcs: [80, 94]
+            ctcs: [80, 94]
+            note: Achievable; requires Compliance Director manual attestation at AG-4
+        classifications:
+          Approved:
+            condition: pcs >= 95 and ctcs >= 95
+            transitions_to: GATE_6_PASSED
+          Conditional:
+            condition: pcs >= 80 and ctcs >= 80 and not Approved
+            transitions_to: HALTED_PROPOSAL_CONDITIONAL
+            recovery: Compliance Director at AG-4 reviews conditional items; may elevate to delivery
+          Rejected:
+            condition: pcs < 80 or ctcs < 80
+            transitions_to: HALTED_PROPOSAL_REJECTED
+            recovery: Escalate to Compliance Director + Sales Director; revised run required
+
+  # -------------------------------------------------------------------------
+  # APPROVAL GATE 4
+  # -------------------------------------------------------------------------
+  approval_gate_4:
+    id: AG-4
+    name: Final Release
+    triggered_after: GATE_6_PASSED (or Compliance Director decision on HALTED_PROPOSAL_CONDITIONAL)
+    approvers:
+      - Compliance Director
+      - Sales Director
+    joint_approval: true
+    timeout_days: 3
+    pending_state: APPROVAL_4_PENDING
+    approved_state: APPROVAL_4_APPROVED
+
+    payload:
+      - "{traceability_id}-proposal-review-certificate.md"
+      - release_classification
+      - pcs_ctcs_scores
+      - claims_firewall_pass_confirmation_terminal
+      - "{traceability_id}-capability-validation-report.md"
+      - all_six_skill_output_documents
+
+    scope: >
+      The Executive Assessment Package is accurate, compliant, and fit for
+      client delivery. All Claims Firewall checks passed. The Release
+      Classification is confirmed. If the proposal review returned a
+      Conditional classification, the Compliance Director must review and
+      manually sign off on each conditional item before approving.
+
+    actions:
+      Both Approve:
+        transitions_to: APPROVAL_4_APPROVED → ASSEMBLING_PACKAGE
+      Approve Conditional with manual attestation:
+        condition: release_classification == Conditional
+        transitions_to: APPROVAL_4_APPROVED
+        requires: Compliance Director signs each conditional item with rationale
+        transitions_then_to: ASSEMBLING_PACKAGE
+      One Approve One Reject:
+        transitions_to: HALTED_APPROVAL_4_PARTIAL
+        action: conflict_resolution
+      Both Reject:
+        transitions_to: HALTED_APPROVAL_4_REJECTED
+
+    timeout_action:
+      state: APPROVAL_TIMED_OUT
+      notify: Compliance Analyst
+      resolution: extend_deadline or initiate_revised_run
+
+# ---------------------------------------------------------------------------
+# OUTPUT ARTIFACTS
+# ---------------------------------------------------------------------------
+
+output_artifacts:
+  skill_outputs:
+    - id: OA-1
+      name: Regulatory Scoping Matrix
+      file: "{traceability_id}-regulatory-scoping-matrix.md"
+      released_after: AG-1 approved
+
+    - id: OA-2
+      name: Regulatory Mapping Payload
+      file: "{traceability_id}-regulatory-mapping-payload.json"
+      released_after: AG-1 approved
+
+    - id: OA-3
+      name: Operational Control Specification
+      file: "{traceability_id}-operational-control-spec.md"
+      released_after: AG-2 approved
+
+    - id: OA-4
+      name: Control Mapping Payload
+      file: "{traceability_id}-control-mapping-payload.json"
+      released_after: AG-2 approved
+
+    - id: OA-5
+      name: Solution Mapping Report
+      file: "{traceability_id}-solution-mapping-report.md"
+      released_after: AG-2 approved
+
+    - id: OA-6
+      name: Solution Mapping Payload
+      file: "{traceability_id}-solution-mapping-payload.json"
+      released_after: AG-2 approved
+
+    - id: OA-7
+      name: ISO 42001 Gap Assessment
+      file: "{traceability_id}-iso42001-gap-assessment.md"
+      released_after: AG-3 approved
+
+    - id: OA-8
+      name: ISO 42001 Payload
+      file: "{traceability_id}-iso42001-gap-assessment-payload.json"
+      released_after: AG-3 approved
+
+    - id: OA-9
+      name: Capability Validation Report
+      file: "{traceability_id}-capability-validation-report.md"
+      released_after: AG-4 approved
+
+    - id: OA-10
+      name: Capability Validation Payload
+      file: "{traceability_id}-capability-validation-payload.json"
+      released_after: AG-4 approved
+
+    - id: OA-11
+      name: Proposal Review Certificate
+      file: "{traceability_id}-proposal-review-certificate.md"
+      released_after: AG-4 approved
+
+    - id: OA-12
+      name: Proposal Review Payload
+      file: "{traceability_id}-proposal-review-payload.json"
+      released_after: AG-4 approved
+
+  assembled_package:
+    - id: OA-13
+      name: Client Scorecard
+      file: "{traceability_id}-client-scorecard.json"
+      produced_by: scorecard_compiler.py
+      assembled_after: AG-4 approved
+      blocked_by: B-01 (scorecard_compiler.py stub)
+
+    - id: OA-14
+      name: Run Log
+      file: "{traceability_id}-run-log.json"
+      assembled_after: COMPLETE
+
+    - id: OA-15
+      name: Executive Assessment Package
+      directory: "{traceability_id}-executive-assessment-package/"
+      contents: [OA-1 through OA-14 as defined in AGENT.md Section 7.2]
+      assembled_after: AG-4 approved
+
+# ---------------------------------------------------------------------------
+# MEMORY MODEL
+# ---------------------------------------------------------------------------
+
+memory_model:
+  tier_1:
+    scope: run_scoped
+    persistence: must survive process restarts when approval gates are open
+    data:
+      trigger_event_payload: json
+      run_state: enum
+      all_timestamps: iso_8601
+      extracted_capability_names: array_of_strings
+      skill_1_output: markdown_and_json
+      skill_2_output: markdown_and_json
+      skill_3_output: markdown_and_json
+      skill_4_output: markdown_and_json
+      skill_5_output: markdown_and_json
+      skill_6_output: markdown_and_json
+      per_skill_gate_scores: json
+      per_skill_firewall_reports: json
+      approval_decisions: json
+      assembly_status: json
+      ag1_notes: string
+      ag3_gap_revision_notes: string
+
+  tier_2:
+    scope: assessment_memory
+    persistence: persistent across runs; indexed by client and run
+    data:
+      all_skill_outputs_per_run:
+        retention: indefinite_until_superseded
+        keys: [traceability_id, client_name, jurisdictions, target_framework]
+      ams_ars_scores:
+        retention: indefinite
+        keys: [client_name, assessment_date]
+      run_status:
+        values: [complete, preliminary, superseded, halted]
+        retention: indefinite
+        keys: [traceability_id]
+      capability_validation_results:
+        retention: indefinite
+        keys: [traceability_id, capability_name]
+      subject_fingerprint:
+        description: deduplication hash
+        keys: [client_name, jurisdictions, target_framework]
+
+  tier_3:
+    scope: client_memory
+    persistence: long-term; survives superseded assessments
+    data:
+      client_profile:
+        fields: [sector, size, deployment_model, existing_tooling]
+        retention: until_client_offboarded
+      engagement_history:
+        description: all traceability_id references for this client
+        retention: 5_years
+      ams_ars_progression:
+        description: tracks certification readiness improvement over time
+        retention: 5_years
+      certification_classifications:
+        description: all classifications with dates
+        retention: 5_years
+      approval_gate_history:
+        description: all decisions and approvers
+        retention: 7_years
+      cpl_history:
+        description: capability claims allowed at each assessment date
+        retention: 5_years
+
+  retention_constraints:
+    prohibited:
+      - PII about client employees beyond named RACI role owners
+      - Confidential client data beyond trigger payload content
+      - Intermediate outputs that did not pass quality gates
+      - Approval decision reasoning beyond approver-recorded notes
+
+# ---------------------------------------------------------------------------
+# FAILURE HANDLING
+# ---------------------------------------------------------------------------
+
+failure_handling:
+  retry_policy:
+    auto_retry_allowed_for:
+      - schema_validation_failure
+    auto_retry_forbidden_for:
+      - score_failures
+      - claims_firewall_breaches
+      - proposal_review_rejected_classification
+      - approval_rejections
+    max_retries: 1
+    retry_strategy: augment_prompt_with_verbatim_error_messages
+
+  halted_states_summary:
+    intake:
+      - HALTED_INTAKE_INVALID
+      - HALTED_INTAKE_UNSUPPORTED_JURISDICTION
+    skill_1:
+      - HALTED_GATE_1_SCHEMA
+      - HALTED_GATE_1_SCORE_PRELIMINARY
+      - HALTED_GATE_1_SCORE_INSUFFICIENT
+      - HALTED_APPROVAL_1_REJECTED
+    skill_2:
+      - HALTED_GATE_2_SCHEMA
+      - HALTED_FIREWALL_BREACH_GCM
+      - HALTED_GATE_2_SCORE_BELOW_THRESHOLD
+      - HALTED_GATE_2_SCORE_INSUFFICIENT
+    skill_3:
+      - HALTED_GATE_3_SCHEMA
+      - HALTED_FIREWALL_BREACH_SOLUTION
+      - HALTED_GATE_3_SCORE_INSUFFICIENT
+      - HALTED_APPROVAL_2_REJECTED
+      - HALTED_APPROVAL_2_PARTIAL
+    skill_4:
+      - HALTED_GATE_4_SCHEMA
+      - HALTED_FIREWALL_BREACH_ISO
+      - HALTED_GATE_4_SCORE_BELOW_THRESHOLD
+      - HALTED_GATE_4_SCORE_INSUFFICIENT
+      - HALTED_APPROVAL_3_REJECTED
+      - HALTED_APPROVAL_3_PARTIAL
+    skill_5:
+      - HALTED_GATE_5_SCHEMA
+      - HALTED_FIREWALL_BREACH_CAPVAL
+      - HALTED_GATE_5_SCORE_INSUFFICIENT
+    skill_6:
+      - HALTED_GATE_6_SCHEMA
+      - HALTED_FIREWALL_BREACH_TERMINAL
+      - HALTED_PROPOSAL_REJECTED
+      - HALTED_PROPOSAL_CONDITIONAL
+      - HALTED_APPROVAL_4_REJECTED
+      - HALTED_APPROVAL_4_PARTIAL
+    cross_cutting:
+      - APPROVAL_TIMED_OUT
+      - HALTED_ESCALATION
+
+# ---------------------------------------------------------------------------
+# ESCALATION ROUTING
+# ---------------------------------------------------------------------------
+
+escalation_routing:
+  automatic:
+    - condition: any_claims_firewall_breach
+      target: Compliance Director
+      payload: [capability_name, canonical_model_entry, offending_text, traceability_id]
+
+    - condition: unsupported_jurisdiction
+      target: [requesting_team, Compliance Analyst]
+
+    - condition: any_skill_score < 55
+      target: Compliance Analyst
+      payload: per_dimension_score_breakdown
+
+    - condition: any_capval_ecs < 45 or escalation_required == true
+      target: [Compliance Director, Product team]
+
+    - condition: proposal_review == Rejected
+      target: [Compliance Director, Sales Director]
+
+    - condition: ambiguous_eu_ai_act_annex_iii_classification
+      target: General Counsel
+      mechanism: run_log_flag
+
+  human_authorised:
+    - condition: ag2_conflict_one_approve_one_reject
+      target: [both_approvers, Compliance Analyst]
+      requires: conflict_resolution_meeting
+
+    - condition: ag3_conflict
+      target: [Client Risk Committee Lead, both_approvers, Compliance Analyst]
+
+    - condition: ag4_conflict
+      target: [Compliance Director, Sales Director, Compliance Analyst]
+      requires: executive_sign_off
+
+    - condition: approval_gate_timeout
+      target: Compliance Analyst
+      options: [extend_deadline, initiate_revised_run]
+
+    - condition: proposal_review_conditional_elevate_to_delivery
+      target: Compliance Director
+      requires: manual_attestation_of_each_conditional_item
+
+# ---------------------------------------------------------------------------
+# SCORECARD COMPILER SPECIFICATION
+# (scorecard_compiler.py must be implemented per this spec before L4A)
+# ---------------------------------------------------------------------------
+
+scorecard_compiler:
+  input:
+    - run_memory.skill_1_output (json)
+    - run_memory.skill_2_output (json)
+    - run_memory.skill_3_output (json)
+    - run_memory.skill_4_output (json)
+    - run_memory.skill_5_output (json)
+    - run_memory.skill_6_output (json)
+    - run_memory.all_approval_decisions (json)
+
+  output: "{traceability_id}-client-scorecard.json"
+
+  fields:
+    traceability_id: from run state
+    client_name: from trigger payload
+    assessment_date: iso_8601
+    regulatory_assessment:
+      score: from skill_1_output gate score
+      jurisdictions: from skill_1_output
+      risk_tier: from skill_1_output Section 1
+    control_assessment:
+      score: from skill_2_output gate score
+      control_count: count of controls in GCM Section 3
+      orphan_controls: count of controls with no RACI owner
+    platform_coverage:
+      ccs_average: average CCS from skill_3_output Section 2
+      production_coverage_percent: percent of requirements at CCS ≥ 70
+      commercial_motion: from skill_3_output Section 2
+    iso42001_assessment:
+      ams: from skill_4_output
+      ars: from skill_4_output
+      certification_classification: from skill_4_output
+      critical_gaps: count from gap register
+      major_gaps: count from gap register
+    capability_validation:
+      capabilities_validated: count of all validations run
+      all_production_confirmed: all validated_status == Production
+      escalations_required: count of escalation_required == true
+    proposal_review:
+      pcs: from skill_6_output
+      ctcs: from skill_6_output
+      release_classification: from skill_6_output
+      claims_firewall_status: confirmed_pass
+    overall_readiness_band:
+      computed_from: ams + platform_coverage + proposal_review release_classification
+      values:
+        - Certification Ready (AMS ≥ 80, PCS ≥ 90)
+        - Assessment Complete — Gaps Identified (AMS 60–79, PCS ≥ 80)
+        - Foundation Building (AMS < 60, PCS ≥ 80)
+        - Delivery Blocked (PCS < 80 or firewall_breach)
+
+  status: STUB — implementation required before L4A
+  blocker_id: B-01

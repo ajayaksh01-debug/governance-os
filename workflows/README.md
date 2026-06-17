@@ -20,6 +20,8 @@ graph TD
         ESM[Ethana Solution Mapping]
         EFM[Ethana Feature Mapping]
         GCM[Governance Control Mapping]
+        EPR[Ethana Proposal Review]
+        ISO42001[ISO 42001 Gap Assessment]
     end
 
     %% Workflows Layer (Green)
@@ -48,6 +50,7 @@ graph TD
 
     W3 ==> RM
     RM ==> GCM
+    GCM ==> ISO42001
     GCM ==> ECV
 
     W4 ==> ECV
@@ -58,6 +61,7 @@ graph TD
     RM ==> GCM
     GCM ==> ESM
     ESM ==> EFM
+    EFM ==> EPR
 ```
 
 ---
@@ -87,6 +91,23 @@ To maximize code reuse and reduce orchestration complexity, workflows leverage t
 All inputs and outputs between workflows must follow standardized JSON schemas:
 - **Upstream Payload Passing:** Outputs must be serialized and passed via the workspace pipeline.
 - **Traceability ID:** Every workflow execution must generate a unique `Traceability ID` (e.g., `TR-WF-2026-XXXX`) to link logs, evidence, and approvals.
+
+**Available schemas in `workflows/schemas/`:**
+
+| Schema file | Skill | Direction |
+|---|---|---|
+| `incident_analysis_output.json` | ai-incident-analysis | Output |
+| `regulatory_mapping_output.json` | regulatory-mapping | Output |
+| `control_mapping_output.json` | governance-control-mapping | Output |
+| `solution_mapping_output.json` | ethana-solution-mapping | Output |
+| `feature_mapping_output.json` | ethana-feature-mapping | Output |
+| `proposal-review-input.schema.json` | ethana-proposal-review | Input |
+| `proposal-review-output.schema.json` | ethana-proposal-review | Output |
+| `iso-42001-gap-assessment-input.schema.json` | iso-42001-gap-assessment | Input |
+| `iso-42001-gap-assessment-output.schema.json` | iso-42001-gap-assessment | Output |
+| `ethana-capability-validation-output.schema.json` | ethana-capability-validation | Output |
+
+The proposal-review and iso-42001-gap-assessment schemas each have explicit input and output schemas defined. The proposal-review output schema carries the machine-readable Release Audit Certificate required by the Ethana Proposal Agent before routing any document for client delivery. The iso-42001-gap-assessment output schema carries AMS, ARS, classification, and gap counts required by the Client Assessment Agent before routing any certification readiness report.
 
 ### 3.2 Error and Deviation Handling
 - **Quality Gate Failure:** If a step's evaluation score falls below its pass threshold (e.g., `<85` in Control Mapping), the workflow halts and triggers the specified **Escalation Path** to the human owner.

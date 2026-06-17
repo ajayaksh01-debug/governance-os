@@ -39,7 +39,7 @@ The **Proposal Development Workflow** orchestrates the end-to-end process from i
    4. ethana-feature-mapping (Technical Fit & POC Scoping)
               │
               ▼ (Draft proposal documents)
-   5. [FUTURE: Proposal Review] (Placeholder Gate)
+   5. ethana-proposal-review (Claims Firewall & Release Classification)
               │
               ▼
    [Final Approved Proposal Package]
@@ -61,13 +61,15 @@ The **Proposal Development Workflow** orchestrates the end-to-end process from i
 - **Skill Engaged:** [ethana-feature-mapping](file:///Users/ajayrajsingh/Documents/governance-os/skills/ethana-feature-mapping/)
 - **Process:** Ingest the proposed capabilities. Validate technical integration paths, calculate Technical Fit Scores (TFS), and design the sandbox POC scope.
 
-### Step 4.5: Proposal Review & Release Classification (Placeholder Integration)
-- **Skill Engaged:** **[FUTURE: Proposal Review]**
+### Step 4.5: Proposal Review & Release Classification
+- **Skill Engaged:** [ethana-proposal-review](file:///Users/ajayrajsingh/Documents/governance-os/skills/ethana-proposal-review/)
 - **Process:** Ingest the draft proposal package (RFP responses, control designs, and POC scope). Perform a final audit against the Claims Firewall and assign a **Release Classification**:
   - *Approved:* Proposal is fully compliant and ready for release.
   - *Approved with Revisions:* Requires minor adjustments before release.
   - *Conditional Release:* Approved subject to specific contractual caveats (e.g., scale caveats).
-  - *Rejected:* Contains material firewall breaches; blocked from release.
+  - *Rejected:* Contains material firewall breaches; blocked from release. The Absolute Release Rule mandates that any In Build or Aspirational capability cited as Production automatically sets Release Classification = Rejected regardless of total score.
+
+The output JSON payload carries the machine-readable Release Audit Certificate. The Ethana Proposal Agent requires a passing Release Audit Certificate before routing any document for client delivery.
 
 ---
 

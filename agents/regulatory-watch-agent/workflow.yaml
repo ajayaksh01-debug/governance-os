@@ -1,0 +1,750 @@
+# Regulatory Watch Agent — Workflow Specification
+# Version: 1.0-spec
+# Do not execute directly. This is an agent specification file, not runnable code.
+# Implementation files: agents/regulatory-watch-agent/orchestrator.py (Level 4B)
+
+agent:
+  name: regulatory-watch-agent
+  version: "1.0-spec"
+  certification_level: L3
+  skill_chain:
+    - regulatory-mapping
+    - governance-control-mapping
+  workflow_reference: workflows/regulatory-compliance-workflow.md
+  workflow_steps_covered: [4.1, 4.2]
+  workflow_steps_excluded: [4.3]  # ethana-solution-mapping is downstream handoff only
+  architecture_reference: docs/architecture/regulatory-watch-agent-architecture.md
+
+# ---------------------------------------------------------------------------
+# Operational modes
+# ---------------------------------------------------------------------------
+
+modes:
+  mode_a:
+    name: Assessment
+    description: >
+      Full two-skill chain execution against a specific AI subject.
+      Triggered by Trigger 1, 2, or any Mode B re-assessment job.
+
+  mode_b:
+    name: Watch
+    description: >
+      Regulatory change detection and re-assessment queuing.
+      Triggered by Trigger 3. Queues Mode A runs for all affected prior assessments.
+    constraints:
+      max_concurrent_reassessments: 3
+      priority_order:
+        - change_severity: Critical
+        - risk_classification: "EU AI Act Annex III"
+        - risk_classification: "PRA SS1/23 Tier 1"
+        - all_remaining: chronological
+
+# ---------------------------------------------------------------------------
+# Trigger events
+# ---------------------------------------------------------------------------
+
+triggers:
+  - id: trigger_1
+    type: new_use_case_registration
+    source: "AI portfolio registry (CRM, JIRA, or equivalent)"
+    signal: "AI use case reaches 'Compliance Review Required' lifecycle stage"
+    mode: A
+
+  - id: trigger_2
+    type: jurisdictional_expansion
+    source: "Project team or CRM system"
+    signal: "Existing AI system proposed for deployment in new jurisdiction"
+    mode: A
+    additional_fields:
+      - existing_assessment_id
+      - new_jurisdiction
+
+  - id: trigger_3
+    type: regulatory_change_alert
+    source: "Compliance team manual trigger or automated regulatory monitoring feed"
+    signal: "Material regulatory update published"
+    mode: B
+    additional_fields:
+      - regulation_name
+      - jurisdiction
+      - change_summary
+      - change_severity  # Critical | Major | Minor
+
+# ---------------------------------------------------------------------------
+# Input schema
+# ---------------------------------------------------------------------------
+
+inputs:
+  required:
+    - field: traceability_id
+      type: string
+      generated_at: intake
+      format: "TR-RW-{YYYY}-{NNNN}"
+      note: Auto-generated; must not be supplied by caller
+
+    - field: trigger_type
+      type: enum
+      values: [new_use_case_registration, jurisdictional_expansion, regulatory_change_alert]
+
+    - field: subject_description
+      type: string
+      validation:
+        min_length: 50
+        must_contain_all:
+          - AI technology type
+          - data processed
+          - affected individuals
+          - deployment location
+
+    - field: subject_type
+      type: enum
+      values: [AI Use Case, AI System, AI Portfolio]
+
+    - field: jurisdictions
+      type: array
+      items:
+        type: enum
+        values: [EU, UK, India]
+      min_items: 1
+      unsupported_jurisdiction_action: HALTED_INTAKE_UNSUPPORTED_JURISDICTION
+
+    - field: target_maturity_level
+      type: enum
+      values: [L1, L2, L3, L4, L5]
+
+  optional:
+    - field: industry
+      type: string
+      effect: "Activates BFSI overlay in regulatory-mapping Phase 1.3 if value indicates BFSI sector"
+
+    - field: data_types
+      type: array
+      items:
+        type: enum
+        values: [personal, financial, biometric, health, public]
+      effect: "Affects GDPR/DPDP Act applicability determination"
+
+    - field: deployment_model
+      type: enum
+      values: [Cloud SaaS, VPC, On-premises]
+      effect: "Affects control design choices in governance-control-mapping"
+
+    - field: existing_tooling
+      type: array
+      effect: "Surfaced to governance-control-mapping Phase 1.2 for third-party integration design"
+
+    - field: existing_assessment_id
+      type: string
+      required_for: trigger_2
+      effect: "Loads prior regulatory-mapping output as incremental context"
+
+  trigger_3_specific:
+    - field: regulation_name
+      type: string
+    - field: jurisdiction
+      type: enum
+      values: [EU, UK, India]
+    - field: change_summary
+      type: string
+    - field: change_severity
+      type: enum
+      values: [Critical, Major, Minor]
+
+# ---------------------------------------------------------------------------
+# Intake validation rules
+# ---------------------------------------------------------------------------
+
+intake_validation:
+  rules:
+    - id: V-01
+      check: "All required fields present and non-empty"
+      fail_state: HALTED_INTAKE_INVALID
+
+    - id: V-02
+      check: "jurisdictions contains only EU, UK, India"
+      fail_state: HALTED_INTAKE_UNSUPPORTED_JURISDICTION
+      escalation: requesting_team + compliance_analyst
+
+    - id: V-03
+      check: "subject_description classified as Low/Medium/High evidence quality (regulatory-mapping Phase 1.4)"
+      low_quality_action: "warning — does not block execution"
+
+    - id: V-04
+      check: "For trigger_2: existing_assessment_id resolves to valid entry in assessment memory"
+      fail_state: HALTED_INTAKE_INVALID
+
+    - id: V-05
+      check: >
+        For trigger_3 with change_severity=Critical and ≥ 3 affected prior assessments:
+        human operator confirmation required before Mode B queue processing begins
+      gate: "Human-authorised escalation"
+
+# ---------------------------------------------------------------------------
+# Skill execution sequence
+# ---------------------------------------------------------------------------
+
+skill_sequence:
+  - step: 1
+    id: skill_1_regulatory_mapping
+    skill: regulatory-mapping
+    skill_path: skills/regulatory-mapping/
+    mode: Assessment (Mode A)
+
+    input_mapping:
+      subject_description: trigger.subject_description
+      subject_type: trigger.subject_type
+      jurisdictions: trigger.jurisdictions
+      industry: trigger.industry  # defaults to "General Enterprise" if absent
+      data_types: trigger.data_types
+      deployment_model: trigger.deployment_model
+      change_summary_addendum:
+        condition: trigger_type == regulatory_change_alert
+        format: "This assessment is a regulatory change re-assessment. Change summary: {trigger.change_summary}"
+        appended_to: subject_description
+
+    expected_output:
+      markdown: "{traceability_id}-regulatory-scoping-matrix.md"
+      json: "{traceability_id}-regulatory-mapping-payload.json"
+      schema: workflows/schemas/regulatory_mapping_output.json
+      structure_baseline: evaluations/baselines/regulatory-mapping/structure.json
+
+    gates_after:
+      - gate_1_rm_schema
+      - gate_2_rm_score
+
+    approval_gate_after: approval_gate_1
+
+    pre_skill_2_check:
+      description: "Verify Section 6 of Skill 1 output is present and non-empty before constructing inter-skill payload"
+      field: "applicable_regulations[*].control_requirements"
+      fail_action: "Halt run with HALTED_GATE_1_SCHEMA; do not proceed to Skill 2"
+
+  - step: 2
+    id: skill_2_governance_control_mapping
+    skill: governance-control-mapping
+    skill_path: skills/governance-control-mapping/
+    depends_on: skill_1_regulatory_mapping + approval_gate_1
+
+    input_mapping:
+      upstream_source_type: "Regulatory Mapping"  # static value
+      traceability_id: run.traceability_id
+      upstream_payload: skill_1.json_output  # full JSON object, not just Section 6
+      target_maturity_level: trigger.target_maturity_level
+      jurisdictions: skill_1.output.jurisdictions
+      client_sector: trigger.industry
+      deployment_model: trigger.deployment_model
+      existing_tooling: trigger.existing_tooling
+      approval_1_notes: approval_gate_1.notes  # null if no notes
+
+    expected_output:
+      markdown: "{traceability_id}-operational-control-spec.md"
+      json: "{traceability_id}-control-mapping-payload.json"
+      schema: workflows/schemas/control_mapping_output.json
+      structure_baseline: evaluations/baselines/governance-control-mapping/structure.json
+
+    claims_firewall_note: >
+      Phase 5 (Platform Status Audit) of governance-control-mapping must consult
+      knowledge/ethana/canonical-product-model.md as the sole authority for every
+      Ethana capability reference. Any In Build or Aspirational capability must not be
+      presented as Production in the output. Gate 3b enforces this automatically.
+
+    gates_after:
+      - gate_3a_gcm_schema
+      - gate_3b_claims_firewall  # runs concurrent with gate_3a
+      - gate_4_gcm_score
+
+    approval_gate_after: approval_gate_2
+
+# ---------------------------------------------------------------------------
+# Gate definitions
+# ---------------------------------------------------------------------------
+
+gates:
+  gate_1_rm_schema:
+    id: Gate-1
+    name: Regulatory Mapping Schema Validation
+    tool: workflow_validator.py
+    command: >
+      python evaluations/scripts/workflow_validator.py
+      {traceability_id}-regulatory-mapping-payload.json
+      workflows/schemas/regulatory_mapping_output.json
+    pass_condition: "0 schema validation errors"
+    retry_policy:
+      max_retries: 1
+      retry_with: "augmented prompt including specific validation error messages"
+    fail_state_after_retry: HALTED_GATE_1_SCHEMA
+    fail_action: "Escalate to Compliance Analyst with error details"
+
+  gate_2_rm_score:
+    id: Gate-2
+    name: Regulatory Mapping Quality Score
+    tool: evaluation rubric
+    rubric_reference: skills/regulatory-mapping/evaluation.md
+    pass_threshold: 70
+    score_stored: "per-dimension breakdown in run-scoped memory"
+    bands:
+      - score_range: [70, 100]
+        state: GATE_2_PASSED
+        action: Proceed to approval_gate_1
+      - score_range: [55, 69]
+        state: HALTED_GATE_2_PRELIMINARY
+        action: "Reclassify as Preliminary; generate revision request with failing dimension breakdown"
+      - score_range: [0, 54]
+        state: HALTED_GATE_2_INSUFFICIENT
+        action: "Escalate to Compliance Analyst; do not auto-retry"
+    note: "Score must be computed per the 9-dimension rubric — not approximated"
+
+  gate_3a_gcm_schema:
+    id: Gate-3a
+    name: Control Mapping Schema Validation
+    tool: workflow_validator.py
+    command: >
+      python evaluations/scripts/workflow_validator.py
+      {traceability_id}-control-mapping-payload.json
+      workflows/schemas/control_mapping_output.json
+    pass_condition: "0 schema validation errors"
+    retry_policy:
+      max_retries: 1
+      retry_with: "augmented prompt including specific validation error messages"
+    fail_state_after_retry: HALTED_GATE_3A_SCHEMA
+    fail_action: "Escalate to Compliance Analyst"
+
+  gate_3b_claims_firewall:
+    id: Gate-3b
+    name: Claims Firewall Compliance Check
+    tool: claims_linter.py
+    command: >
+      python evaluations/scripts/claims_linter.py
+      {traceability_id}-operational-control-spec.md
+    linter_version: "hardened 2026-06-18"
+    linter_reference: docs/architecture/claims-linter-hardening-validation.md
+    pass_condition: "0 violations"
+    bypass_permitted: false
+    fail_state: HALTED_FIREWALL_BREACH
+    fail_action:
+      - Auto-route to Compliance Director
+      - Include: specific capability reference, canonical model entry, section of control spec that referenced it
+      - Do not revise the output
+      - Complete halt; no auto-retry permitted
+      - Compliance Director sign-off required before any re-run
+    escalation_target: compliance_director
+    runs_concurrent_with: gate_3a_gcm_schema
+
+  gate_4_gcm_score:
+    id: Gate-4
+    name: Control Mapping Quality Score
+    tool: evaluation rubric
+    rubric_reference: skills/governance-control-mapping/evaluation.md
+    pass_threshold: 85
+    score_stored: "per-section breakdown in run-scoped memory"
+    bands:
+      - score_range: [85, 100]
+        state: GATE_4_PASSED
+        action: Proceed to approval_gate_2
+      - score_range: [70, 84]
+        state: HALTED_GATE_4_BELOW_THRESHOLD
+        action: "Generate revision request with failing section breakdown; operator reviews before re-run"
+      - score_range: [0, 69]
+        state: HALTED_GATE_4_INSUFFICIENT
+        action: "Escalate to Compliance Analyst; do not auto-retry"
+
+# ---------------------------------------------------------------------------
+# Approval gate definitions
+# ---------------------------------------------------------------------------
+
+approval_gates:
+  approval_gate_1:
+    id: AG-1
+    name: Regulatory Scoping Matrix Review
+    triggered_after: [gate_1_rm_schema, gate_2_rm_score]
+    approver:
+      role: General Counsel
+      fallback: "Designated Legal Representative"
+    payload_to_approver:
+      - "{traceability_id}-regulatory-scoping-matrix.md"
+      - "Gate 2 per-dimension score breakdown"
+      - "Evidence quality rating (High / Medium / Low)"
+      - "Conditional applicability flags requiring legal judgement"
+      - "Ambiguous Annex III classifications with determining factors"
+    timeout_business_days: 5
+    timeout_state: APPROVAL_TIMED_OUT
+    timeout_escalation: compliance_analyst
+    actions:
+      approve:
+        transition: APPROVAL_1_APPROVED
+        next: SKILL_2_RUNNING
+      approve_with_notes:
+        transition: APPROVAL_1_APPROVED
+        next: SKILL_2_RUNNING
+        notes_handling: "Attach to run log and include in inter-skill payload as approval_1_notes"
+      reject:
+        transition: HALTED_APPROVAL_1_REJECTED
+        next: null
+        recovery: "Operator reviews rejection notes; initiates revised run"
+    scope_of_approval: >
+      Regulatory Scoping Matrix is accurate as a statement of regulatory applicability
+      and obligation scope. Risk classifications are legally defensible. Does NOT
+      authorise the control design. Run log must note this is not a formal legal opinion.
+
+  approval_gate_2:
+    id: AG-2
+    name: Operational Control Specification and RACI Review
+    triggered_after: [gate_3a_gcm_schema, gate_3b_claims_firewall, gate_4_gcm_score]
+    approvers:
+      - role: DPO
+        required: true
+      - role: Information Security Lead
+        required: true
+    joint_sign_off_required: true
+    payload_to_approvers:
+      - "{traceability_id}-operational-control-spec.md"
+      - "Gate 4 per-section score breakdown"
+      - "Claims Firewall compliance status: CONFIRMED PASS"
+      - "Section 8 RACI matrix with named role assignments"
+      - "Section 10 Ethana Configuration Guide with In Build capabilities flagged as roadmap items"
+    timeout_business_days: 5
+    timeout_state: APPROVAL_TIMED_OUT
+    timeout_escalation: compliance_analyst
+    actions:
+      both_approve:
+        transition: APPROVAL_2_APPROVED
+        next: COMPLETE
+      approve_with_modifications:
+        scope: "RACI role assignments or control caveats only"
+        transition: "Re-run Gates 3a, 3b, 4 after incorporating modifications"
+        next: APPROVAL_2_APPROVED (after re-gate)
+      one_approves_one_rejects:
+        transition: HALTED_APPROVAL_2_PARTIAL
+        recovery: "Conflict resolution meeting: both approvers + Compliance Analyst; outcome in run log"
+      both_reject:
+        transition: HALTED_APPROVAL_2_REJECTED
+        recovery: "Operator reviews rejection notes; initiates revised run"
+    scope_of_approval: >
+      Controls are implementable given the organisation's current security posture and team
+      structure. RACI assignments are accepted by the named role owners. Maturity roadmap
+      timeline is realistic.
+
+# ---------------------------------------------------------------------------
+# Output artifacts
+# ---------------------------------------------------------------------------
+
+outputs:
+  - id: regulatory_scoping_matrix
+    file: "{traceability_id}-regulatory-scoping-matrix.md"
+    produced_after: skill_1
+    released_after: approval_gate_1
+    format: Markdown (9 sections)
+    sections:
+      - "1. Applicable Regulations"
+      - "2. Applicable Governance Frameworks"
+      - "3. Regulatory Obligations"
+      - "4. Risk Classification"
+      - "5. Documentation Requirements"
+      - "6. Control Requirements"
+      - "7. Audit Evidence Required"
+      - "8. BFSI Considerations"
+      - "9. Executive Summary"
+
+  - id: regulatory_mapping_payload
+    file: "{traceability_id}-regulatory-mapping-payload.json"
+    produced_after: skill_1
+    schema: workflows/schemas/regulatory_mapping_output.json
+    consumed_by:
+      - approval_gate_1 (validation)
+      - skill_2 (upstream_payload field)
+      - compliance_coverage_package (final bundle)
+      - client_assessment_agent (when built; automated hand-off)
+
+  - id: operational_control_spec
+    file: "{traceability_id}-operational-control-spec.md"
+    produced_after: skill_2
+    released_after: approval_gate_2
+    format: Markdown (10 sections)
+    sections:
+      - "Section 1: Executive Summary & Control Landscape"
+      - "Section 2: Control Taxonomy Matrix"
+      - "Section 3: Control Coverage Classification"
+      - "Section 4: Preventive Control Specifications"
+      - "Section 5: Detective Control Specifications"
+      - "Section 6: Corrective Control Specifications"
+      - "Section 7: Evidence & Verification Requirements"
+      - "Section 8: Control Ownership Matrix (RACI)"
+      - "Section 9: Maturity & Phased Roadmap"
+      - "Section 10: Ethana Configuration Guide"
+
+  - id: control_mapping_payload
+    file: "{traceability_id}-control-mapping-payload.json"
+    produced_after: skill_2
+    schema: workflows/schemas/control_mapping_output.json
+    consumed_by:
+      - approval_gate_2 (validation)
+      - compliance_coverage_package (final bundle)
+      - client_assessment_agent (when built)
+      - ethana_solution_mapping (manual handoff; not in agent scope)
+
+  - id: run_log
+    file: "{traceability_id}-run-log.json"
+    produced_at: COMPLETE state
+    contents:
+      - trigger_event (full payload)
+      - state_transitions (each with timestamp, trigger, human actor if applicable)
+      - gate_scores (per-dimension for Gate 2; per-section for Gate 4)
+      - approval_decisions (with notes if provided)
+      - escalation_events
+      - approval_scope_disclaimer: >
+          "General Counsel approval of Regulatory Scoping Matrix is not a
+          formal legal opinion and does not constitute legal advice."
+
+  - id: handoff_note
+    file: "{traceability_id}-handoff-note.md"
+    produced_at: COMPLETE state
+    consumer: "Human practitioner or Client Assessment Agent (downstream; Step 4.3)"
+    contents:
+      - upstream_traceability_ids
+      - control_mapping_payload_location
+      - jurisdiction_set
+      - sector
+      - deployment_model
+      - target_maturity_level
+      - ethana_capability_references_in_section_10
+      - recommended_next_step: "Execute ethana-solution-mapping to produce Coverage Confidence Score"
+
+  - id: compliance_coverage_package
+    description: "Combined final deliverable"
+    produced_at: COMPLETE state
+    contains:
+      - regulatory_scoping_matrix
+      - operational_control_spec
+      - regulatory_mapping_payload
+      - control_mapping_payload
+      - run_log
+      - handoff_note
+
+# ---------------------------------------------------------------------------
+# Memory configuration
+# ---------------------------------------------------------------------------
+
+memory:
+  run_scoped:
+    description: "Per-run temporary memory; must survive process restarts"
+    persistence: "Durable storage (not in-process memory)"
+    lifecycle: "Created at INTAKE_VALIDATING; cleared after COMPLETE or permanent halt"
+    fields:
+      - trigger_payload
+      - run_state
+      - skill_1_output_markdown
+      - skill_1_output_json
+      - skill_1_gate_scores
+      - approval_1_decision_and_notes
+      - skill_2_output_markdown
+      - skill_2_output_json
+      - skill_2_gate_scores
+      - claims_firewall_report
+      - approval_2_decision_and_notes
+
+  assessment:
+    description: "Persistent cross-run store; indexed for Mode B re-assessment queries"
+    persistence: "Indefinite until superseded"
+    indices:
+      - traceability_id
+      - subject_description (for fuzzy deduplication)
+      - jurisdictions
+      - regulations_applicable
+      - subject_type + jurisdictions + industry (hash fingerprint for exact deduplication)
+    records:
+      - regulatory_mapping_output_json
+      - control_mapping_output_json
+      - assessment_status  # complete | preliminary | superseded
+
+  regulatory_calendar:
+    description: "Mode B deduplication store; prevents duplicate re-assessment queues"
+    retention: 3_years
+    records:
+      - regulation_name
+      - change_description
+      - effective_date  # ISO 8601
+      - agent_severity_classification
+      - affected_assessments_count
+      - queue_processing_status  # Queued | In progress | Complete
+
+  do_not_retain:
+    - "PII beyond what is minimally required to identify the AI subject"
+    - "Client confidential data beyond trigger payload"
+    - "Approval reasoning beyond what the approver explicitly records"
+    - "Intermediate skill outputs that did not pass quality gates"
+
+# ---------------------------------------------------------------------------
+# Mode B watch configuration
+# ---------------------------------------------------------------------------
+
+mode_b:
+  trigger_event: regulatory_change_alert
+
+  step_1_affected_subject_query:
+    source: assessment_memory
+    query: "Find all records where regulations_applicable contains trigger.regulation_name AND jurisdictions contains trigger.jurisdiction"
+    returns: list of traceability_ids
+
+  step_2_queue_construction:
+    sort_order:
+      - change_severity: Critical
+      - ai_risk_classification: "EU AI Act Annex III"
+      - ai_risk_classification: "PRA SS1/23 Tier 1"
+      - all_remaining: chronological
+
+  step_3_execution:
+    max_concurrent: 3
+    overflow_action: >
+      Queue remaining subjects; notify human operator with subject list and count.
+      Human operator authorises continuation before agent processes queue.
+    critical_overflow_action: >
+      If change_severity=Critical and ≥3 affected subjects, operator confirmation
+      required BEFORE any queue processing begins (not just for overflow).
+
+  step_4_reassessment_payload:
+    base: original trigger payload from assessment_memory
+    addendum_field: subject_description
+    addendum_format: >
+      "This assessment is a regulatory change re-assessment.
+       Original assessment: {existing_assessment_id}.
+       Change summary: {trigger.change_summary}"
+
+  deduplication:
+    check: regulatory_calendar
+    action: "If this regulation + jurisdiction combination was processed in the last 24h, skip and log"
+
+# ---------------------------------------------------------------------------
+# Escalation routing
+# ---------------------------------------------------------------------------
+
+escalations:
+  automatic:
+    - condition: "Claims Firewall breach in Skill 2 output"
+      target: compliance_director
+      message_includes:
+        - capability_reference (the In Build/Aspirational capability name)
+        - canonical_model_entry (status from canonical-product-model.md)
+        - control_section (section of GCM output that incorrectly referenced it)
+
+    - condition: "Unsupported jurisdiction in trigger payload"
+      target: [requesting_team, compliance_analyst]
+      message: "Unsupported jurisdiction [{jurisdiction}]. Supported: EU, UK, India. Assessment halted."
+
+    - condition: "Skill score < 55 (either skill)"
+      target: compliance_analyst
+      message_includes: "per-dimension score breakdown"
+
+    - condition: "Ambiguous EU AI Act Annex III classification detected"
+      target: general_counsel
+      channel: run_log_flag
+      message: >
+        "Annex III classification for [{subject}] is ambiguous.
+         Determining factors: [{factors}].
+         Legal review required before finalising Section 4."
+
+  human_authorised:
+    - condition: "General Counsel disputes risk classification"
+      target: chief_compliance_officer
+      authorisation: "General Counsel formally escalates; written sign-off required"
+
+    - condition: "Mode B re-assessment queue > 3 subjects"
+      target: human_operator
+      authorisation: "Operator explicitly authorises further queue processing"
+
+    - condition: "Approval gate timeout (5 business days)"
+      target: compliance_analyst
+      authorisation: "Analyst extends deadline or initiates revised run"
+
+    - condition: "Approval Gate 2 conflict (one approve, one reject)"
+      target: [dpo, information_security_lead, compliance_analyst]
+      authorisation: "Conflict resolution meeting required; outcome recorded in run log"
+
+# ---------------------------------------------------------------------------
+# Failure handling
+# ---------------------------------------------------------------------------
+
+failure_handling:
+  retry_policy:
+    schema_failures:
+      max_retries: 1
+      retry_strategy: "augmented prompt with specific validation error messages"
+      fail_after_retry: "Halt and escalate"
+    score_failures:
+      auto_retry: false
+      reason: "Rubric failure analysis must be reviewed before re-execution"
+    firewall_breaches:
+      auto_retry: false
+      reason: "Not re-runnable without Compliance Director sign-off"
+    approval_rejections:
+      auto_retry: false
+      reason: "Require operator initiation of a new run"
+
+  partial_output_release:
+    condition: "Skill 1 approved at Gate 1 but run halts after Approval Gate 1 passes"
+    permitted: true
+    requirement: "Operator must explicitly request release; agent must not auto-release"
+    artifact: "{traceability_id}-regulatory-scoping-matrix.md"
+
+  approval_gate_timeout:
+    default_days: 5
+    configurable: true
+    on_timeout:
+      state: APPROVAL_TIMED_OUT
+      action: "Notify Compliance Analyst"
+      auto_approve: false
+      auto_escalate: false
+      human_action_required: true
+
+# ---------------------------------------------------------------------------
+# Success metrics (targets)
+# ---------------------------------------------------------------------------
+
+success_metrics:
+  quality:
+    - metric: Regulatory Mapping score per run
+      gate_threshold: 70
+      aspirational_target: 80
+    - metric: Control Mapping score per run
+      gate_threshold: 85
+      aspirational_target: 90
+    - metric: Claims Firewall compliance rate
+      target: "100% (0 breaches)"
+    - metric: Schema validation pass rate (first attempt)
+      target: "100% (0 retries)"
+    - metric: Schema retry rate
+      target: "< 5% of runs"
+
+  throughput:
+    - metric: Skill 1 execution time (single jurisdiction)
+      target: "≤ 90 minutes"
+    - metric: Skill 1 execution time (multi-jurisdiction)
+      target: "≤ 150 minutes"
+    - metric: Skill 2 execution time (single jurisdiction)
+      target: "≤ 90 minutes"
+    - metric: Skill 2 execution time (multi-jurisdiction)
+      target: "≤ 120 minutes"
+    - metric: Approval Gate 1 turnaround
+      target: "≤ 2 business days"
+    - metric: Approval Gate 2 turnaround
+      target: "≤ 3 business days"
+    - metric: End-to-end cycle time
+      target: "≤ 7 business days"
+
+  effectiveness:
+    - metric: Compliance Coverage Rate
+      target: "100% of applicable obligations mapped to active controls"
+      measurement: "Human reviewer audit of Skill 1 Section 6 vs Skill 2 Section 4"
+    - metric: Regulatory citation accuracy
+      target: "100% of obligations cite specific legal provisions"
+    - metric: Audit Readiness Index
+      target: "100% of controls have defined evidence collection mechanisms"
+    - metric: RACI completeness
+      target: "Zero orphan controls (every control has exactly one Accountable role)"
+
+  mode_b:
+    - metric: Change to first re-assessment triggered
+      target: "≤ 1 business day"
+    - metric: Re-assessment queue completion (Critical severity)
+      target: "≤ 5 business days"
+    - metric: Re-assessment coverage rate
+      target: "≥ 95% of affected assessments identified"

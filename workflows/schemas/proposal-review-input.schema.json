@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProposalReviewInput",
+  "description": "Input payload for the Ethana Proposal Review skill. Requires the complete draft document and the outputs of Solution Mapping and Feature Mapping. Capability Validation, Regulatory Mapping, and Control Mapping outputs are strongly recommended.",
+  "type": "object",
+  "required": [
+    "draft_proposal",
+    "solution_mapping_output",
+    "feature_mapping_output"
+  ],
+  "properties": {
+    "draft_proposal": {
+      "type": "string",
+      "description": "The complete draft customer-facing document — all sections containing Ethana capability claims must be included. Partial documents cannot receive a valid Release Classification."
+    },
+    "solution_mapping_output": {
+      "type": "object",
+      "description": "Full output from skills/ethana-solution-mapping/. Section 3 (Proposal-Safe Platform Capabilities) and Section 5 (Prohibited Claims Register) are the primary traceability references.",
+      "required": ["matched_capabilities", "overall_coverage_summary"],
+      "properties": {
+        "matched_capabilities": { "type": "array" },
+        "overall_coverage_summary": { "type": "object" }
+      }
+    },
+    "feature_mapping_output": {
+      "type": "object",
+      "description": "Full output from skills/ethana-feature-mapping/. Section 1 (Feature Validation Table + TFS scores) and Section 6 (Prohibited Feature Claims Register) are the primary traceability references.",
+      "required": ["feature_validation_table"],
+      "properties": {
+        "feature_validation_table": { "type": "array" }
+      }
+    },
+    "capability_validation_output": {
+      "type": "object",
+      "description": "Strongly recommended. Output from skills/ethana-capability-validation/. Section 4 (Allowed Claims + CPL) and Section 5 (Prohibited Claims) are consulted when a specific capability was formally validated. Without this input, CTCS >= 95 is not achievable.",
+      "properties": {
+        "allowed_claims": { "type": "array" },
+        "prohibited_claims": { "type": "array" }
+      }
+    },
+    "regulatory_mapping_output": {
+      "type": "object",
+      "description": "Recommended. Output from skills/regulatory-mapping/. Section 6 (Control Requirements) is the reference for Section 5 (Regulatory Coverage Validation) of this review.",
+      "properties": {
+        "control_requirements": { "type": "array" }
+      }
+    },
+    "control_mapping_output": {
+      "type": "object",
+      "description": "Recommended. Output from skills/governance-control-mapping/. Section 10 (Ethana Configuration Guide) is the reference for Section 6 (Control Coverage Validation) of this review.",
+      "properties": {
+        "ethana_configuration_guide": { "type": "array" }
+      }
+    },
+    "output_mode": {
+      "type": "string",
+      "enum": ["RFP Response", "Formal Proposal", "Statement of Work", "Pitch Deck"],
+      "description": "Affects language register in Section 1 and disclosure strictness for In Build roadmap mentions."
+    },
+    "customer_sector": {
+      "type": "string",
+      "enum": ["BFSI", "Healthcare", "Government", "General Enterprise"],
+      "description": "BFSI triggers additional certification claim checks (SOC 2, ISO 27001, RBI audit readiness)."
+    },
+    "jurisdictions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["EU", "UK", "India", "US", "Other"]
+      },
+      "description": "Shapes which regulatory capability claims require jurisdiction-specific disclosure."
+    }
+  },
+  "additionalProperties": false
+}

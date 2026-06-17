@@ -29,9 +29,9 @@ The **Governance Assessment Workflow** delivers a comprehensive baseline audit o
    1. regulatory-mapping (Framework Scoping)
                │
                ▼ (Section 2 framework payload)
-   2. [FUTURE: ISO 42001 Gap Assessment] (Placeholder)
+   2. iso-42001-gap-assessment (Framework Gap Analysis)
                │
-               ▼ (Identified gaps payload)
+               ▼ (AMS/ARS/gap register payload)
    3. governance-control-mapping (Maturity Roadmap & RACI)
                │
                ▼ (Technical control specs)
@@ -45,9 +45,9 @@ The **Governance Assessment Workflow** delivers a comprehensive baseline audit o
 - **Skill Engaged:** [regulatory-mapping](file:///Users/ajayrajsingh/Documents/governance-os/skills/regulatory-mapping/)
 - **Process:** Ingest the client's AI portfolio and policies. Map them against target framework clauses (e.g., ISO 42001 Clause 8, Annex A controls) to establish applicability boundaries.
 
-### Step 4.2: Framework Gap Analysis (Placeholder Integration)
-- **Skill Engaged:** **[FUTURE: ISO 42001 Gap Assessment]**
-- **Process:** Ingest Section 2 (Applicable Governance Frameworks) from Regulatory Mapping. Run a clause-by-clause compliance audit against current client evidence. Output a detailed gap register highlighting missing controls, inadequate documentation, or unverified audit records.
+### Step 4.2: Framework Gap Analysis
+- **Skill Engaged:** [iso-42001-gap-assessment](file:///Users/ajayrajsingh/Documents/governance-os/skills/iso-42001-gap-assessment/)
+- **Process:** Ingest Section 2 (Applicable Governance Frameworks) from Regulatory Mapping. Run a 7-phase clause-by-clause and Annex A compliance audit against current client evidence. Output AMS, ARS, Certification Classification, and a structured gap register (Critical/Major/Minor). Section 8.5 Claims Firewall Review is mandatory before the output is finalised. The output JSON payload (AMS, ARS, classification, gap counts) is consumed by the governance-control-mapping step and required by the Client Assessment Agent before routing any certification readiness report.
 
 ### Step 4.3: Maturity Roadmap & RACI Design
 - **Skill Engaged:** [governance-control-mapping](file:///Users/ajayrajsingh/Documents/governance-os/skills/governance-control-mapping/)
