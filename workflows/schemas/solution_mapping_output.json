@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SolutionMappingOutput",
+  "type": "OBJECT",
+  "required": [
+    "matched_capabilities",
+    "overall_coverage_summary"
+  ],
+  "properties": {
+    "matched_capabilities": {
+      "type": "ARRAY",
+      "items": {
+        "type": "OBJECT",
+        "required": ["requirement", "matched_capability", "capability_status", "ccs_score", "disposition"],
+        "properties": {
+          "requirement": { "type": "STRING" },
+          "matched_capability": { "type": "STRING" },
+          "capability_status": { "type": "STRING", "enum": ["Production", "In Build", "Roadmap", "Aspirational", "Not addressed"] },
+          "ccs_score": { "type": "INTEGER", "minimum": 0, "maximum": 100 },
+          "disposition": { "type": "STRING", "enum": ["Include in proposal", "Roadmap mention only", "Bridge to Cursory", "Gap register"] }
+        }
+      }
+    },
+    "overall_coverage_summary": {
+      "type": "OBJECT",
+      "required": ["coverage_characterization", "advisory_first_recommended"],
+      "properties": {
+        "coverage_characterization": { "type": "STRING", "enum": ["Platform-Primary", "Cursory-Primary"] },
+        "advisory_first_recommended": { "type": "BOOLEAN" },
+        "ccs_distribution": {
+          "type": "OBJECT",
+          "properties": {
+            "Full": { "type": "INTEGER" },
+            "High": { "type": "INTEGER" },
+            "Partial": { "type": "INTEGER" },
+            "Thin": { "type": "INTEGER" },
+            "None": { "type": "INTEGER" }
+          }
+        }
+      }
+    }
+  }
+}

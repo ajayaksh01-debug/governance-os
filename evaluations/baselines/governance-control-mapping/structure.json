@@ -1,0 +1,26 @@
+{
+  "skill_name": "governance-control-mapping",
+  "pass_threshold": 85,
+  "required_headers": [
+    "### Section 1: Executive Summary & Control Landscape",
+    "### Section 2: Control Taxonomy Matrix",
+    "### Section 3: Control Coverage Classification",
+    "### Section 4: Preventive Control Specifications",
+    "### Section 5: Detective Control Specifications",
+    "### Section 6: Corrective Control Specifications",
+    "### Section 7: Evidence & Verification Requirements",
+    "### Section 8: Control Ownership Matrix (RACI)",
+    "### Section 9: Maturity & Phased Roadmap",
+    "### Section 10: Ethana Configuration Guide"
+  ],
+  "required_tables": [
+    {
+      "preceding_header": "### Section 2: Control Taxonomy Matrix",
+      "required_columns": ["Control ID", "Control Name", "Control Type", "Control Method", "Primary Risk Mitigated"]
+    },
+    {
+      "preceding_header": "### Section 8: Control Ownership Matrix (RACI)",
+      "required_columns": ["Control ID", "Responsible (R)", "Accountable (A)"]
+    }
+  ]
+}

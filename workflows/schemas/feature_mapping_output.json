@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FeatureMappingOutput",
+  "type": "OBJECT",
+  "required": [
+    "technical_validation_map",
+    "overall_tfs_score"
+  ],
+  "properties": {
+    "technical_validation_map": {
+      "type": "ARRAY",
+      "items": {
+        "type": "OBJECT",
+        "required": ["proposed_feature", "canonical_capability", "integration_path", "tfs_score", "poc_readiness"],
+        "properties": {
+          "proposed_feature": { "type": "STRING" },
+          "canonical_capability": { "type": "STRING" },
+          "integration_path": { "type": "STRING" },
+          "tfs_score": { "type": "INTEGER", "minimum": 0, "maximum": 100 },
+          "poc_readiness": { "type": "STRING", "enum": ["Ready", "Roadmap-Blocked", "Incompatible"] }
+        }
+      }
+    },
+    "overall_tfs_score": {
+      "type": "INTEGER",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "sandbox_poc_scope": {
+      "type": "OBJECT",
+      "properties": {
+        "required_nodes": { "type": "INTEGER" },
+        "test_apis": {
+          "type": "ARRAY",
+          "items": { "type": "STRING" }
+        },
+        "estimated_setup_weeks": { "type": "INTEGER" }
+      }
+    }
+  }
+}

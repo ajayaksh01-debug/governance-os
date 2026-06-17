@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "IncidentAnalysisOutput",
+  "type": "OBJECT",
+  "required": [
+    "incident_summary",
+    "root_cause_analysis",
+    "risk_category",
+    "control_failures",
+    "recommended_controls"
+  ],
+  "properties": {
+    "incident_summary": {
+      "type": "STRING",
+      "maxLength": 200
+    },
+    "root_cause_analysis": {
+      "type": "OBJECT",
+      "required": ["proximate_cause", "contributing_factors", "root_cause"],
+      "properties": {
+        "proximate_cause": { "type": "STRING" },
+        "contributing_factors": {
+          "type": "ARRAY",
+          "items": { "type": "STRING" }
+        },
+        "root_cause": { "type": "STRING" }
+      }
+    },
+    "risk_category": {
+      "type": "OBJECT",
+      "required": ["primary"],
+      "properties": {
+        "primary": {
+          "type": "STRING",
+          "enum": [
+            "Prompt Injection",
+            "Data Exfiltration",
+            "Model Failure",
+            "Bias / Fairness",
+            "Excessive Agency",
+            "Supply Chain",
+            "Privacy Breach",
+            "Governance Failure",
+            "Misinformation / Hallucination",
+            "Security Exploitation"
+          ]
+        },
+        "secondary": {
+          "type": "ARRAY",
+          "items": { "type": "STRING" },
+          "maxItems": 2
+        }
+      }
+    },
+    "control_failures": {
+      "type": "ARRAY",
+      "items": {
+        "type": "OBJECT",
+        "required": ["control_name", "category", "failure_type", "description"],
+        "properties": {
+          "control_name": { "type": "STRING" },
+          "category": { "type": "STRING", "enum": ["Preventive", "Detective", "Corrective"] },
+          "failure_type": { "type": "STRING", "enum": ["Absent", "Inadequate design", "Inadequate operation"] },
+          "description": { "type": "STRING" }
+        }
+      }
+    },
+    "recommended_controls": {
+      "type": "ARRAY",
+      "items": {
+        "type": "OBJECT",
+        "required": ["control_name", "description", "complexity", "priority", "framework_reference"],
+        "properties": {
+          "control_name": { "type": "STRING" },
+          "description": { "type": "STRING" },
+          "complexity": { "type": "STRING", "enum": ["Low", "Medium", "High"] },
+          "priority": { "type": "STRING", "enum": ["Critical", "High", "Medium"] },
+          "framework_reference": { "type": "STRING" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "skill_name": "regulatory-mapping",
+  "pass_threshold": 70,
+  "required_headers": [
+    "### 1. Applicable Regulations",
+    "### 2. Applicable Governance Frameworks",
+    "### 3. Regulatory Obligations",
+    "### 4. Risk Classification",
+    "### 5. Documentation Requirements",
+    "### 6. Control Requirements",
+    "### 7. Audit Evidence Required",
+    "### 8. BFSI Considerations",
+    "### 9. Executive Summary"
+  ],
+  "required_tables": [
+    {
+      "preceding_header": "### 1. Applicable Regulations",
+      "required_columns": ["Regulation", "Jurisdiction", "Applicability Status", "Trigger"]
+    },
+    {
+      "preceding_header": "### 3. Regulatory Obligations",
+      "required_columns": ["Obligation Description", "Legal Basis", "Type", "Timeline"]
+    }
+  ]
+}

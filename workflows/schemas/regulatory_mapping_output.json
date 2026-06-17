@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RegulatoryMappingOutput",
+  "type": "OBJECT",
+  "required": [
+    "applicable_regulations",
+    "applicable_frameworks",
+    "regulatory_obligations",
+    "control_requirements"
+  ],
+  "properties": {
+    "applicable_regulations": {
+      "type": "ARRAY",
+      "items": {
+        "type": "OBJECT",
+        "required": ["regulation_name", "jurisdiction", "trigger", "status"],
+        "properties": {
+          "regulation_name": { "type": "STRING" },
+          "jurisdiction": { "type": "STRING", "enum": ["EU", "UK", "India", "Global"] },
+          "trigger": { "type": "STRING" },
+          "status": { "type": "STRING", "enum": ["Confirmed", "Likely", "Conditional"] }
+        }
+      }
+    },
+    "applicable_frameworks": {
+      "type": "ARRAY",
+      "items": {
+        "type": "OBJECT",
+        "required": ["framework_name", "relevant_provisions"],
+        "properties": {
+          "framework_name": { "type": "STRING", "enum": ["ISO 42001", "NIST AI RMF", "OWASP LLM Top 10"] },
+          "relevant_provisions": {
+            "type": "ARRAY",
+            "items": { "type": "STRING" }
+          }
+        }
+      }
+    },
+    "regulatory_obligations": {
+      "type": "ARRAY",
+      "items": {
+        "type": "OBJECT",
+        "required": ["obligation_description", "legal_basis", "obligation_type"],
+        "properties": {
+          "obligation_description": { "type": "STRING" },
+          "legal_basis": { "type": "STRING" },
+          "obligation_type": { "type": "STRING", "enum": ["Registration", "Notification", "Documentation", "Assessment", "Monitoring", "Reporting", "Disclosure"] },
+          "timeline": { "type": "STRING" },
+          "consequence_noncompliance": { "type": "STRING" }
+        }
+      }
+    },
+    "control_requirements": {
+      "type": "ARRAY",
+      "items": {
+        "type": "OBJECT",
+        "required": ["control_name", "description", "source", "control_type", "mandatory"],
+        "properties": {
+          "control_name": { "type": "STRING" },
+          "description": { "type": "STRING" },
+          "source": { "type": "STRING" },
+          "control_type": { "type": "STRING", "enum": ["Preventive", "Detective", "Corrective"] },
+          "mandatory": { "type": "BOOLEAN" }
+        }
+      }
+    }
+  }
+}
