@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ControlMappingOutput",
+  "type": "OBJECT",
+  "required": [
+    "executive_summary",
+    "control_taxonomy_matrix",
+    "preventive_controls",
+    "detective_controls",
+    "corrective_controls",
+    "evidence_registry",
+    "raci_matrix"
+  ],
+  "properties": {
+    "executive_summary": { "type": "STRING" },
+    "control_taxonomy_matrix": {
+      "type": "ARRAY",
+      "items": {
+        "type": "OBJECT",
+        "required": ["control_id", "control_name", "control_type", "control_method", "coverage_classification"],
+        "properties": {
+          "control_id": { "type": "STRING" },
+          "control_name": { "type": "STRING" },
+          "control_type": { "type": "STRING", "enum": ["Preventive", "Detective", "Corrective"] },
+          "control_method": { "type": "STRING", "enum": ["Technical", "Process"] },
+          "coverage_classification": {
+            "type": "STRING",
+            "enum": [
+              "Fully Covered by Ethana",
+              "Partially Covered by Ethana",
+              "Covered by Cursory Service",
+              "Third-Party Control Required",
+              "Customer-Owned Control"
+            ]
+          }
+        }
+      }
+    },
+    "preventive_controls": {
+      "type": "ARRAY",
+      "items": {
+        "type": "OBJECT",
+        "required": ["control_id", "control_name", "trigger_condition", "enforcement_mechanism", "failure_mode"],
+        "properties": {
+          "control_id": { "type": "STRING" },
+          "control_name": { "type": "STRING" },
+          "trigger_condition": { "type": "STRING" },
+          "enforcement_mechanism": { "type": "STRING" },
+          "failure_mode": { "type": "STRING", "enum": ["Fail-Open", "Fail-Closed"] }
+        }
+      }
+    },
+    "detective_controls": {
+      "type": "ARRAY",
+      "items": {
+        "type": "OBJECT",
+        "required": ["control_id", "control_name", "logging_source", "telemetry_format", "alerting_thresholds"],
+        "properties": {
+          "control_id": { "type": "STRING" },
+          "control_name": { "type": "STRING" },
+          "logging_source": { "type": "STRING" },
+          "telemetry_format": {
+            "type": "ARRAY",
+            "items": { "type": "STRING" }
+          },
+          "alerting_thresholds": { "type": "STRING" },
+          "routing_target": { "type": "STRING" }
+        }
+      }
+    },
+    "corrective_controls": {
+      "type": "ARRAY",
+      "items": {
+        "type": "OBJECT",
+        "required": ["control_id", "control_name", "activation_trigger", "containment_protocol", "recovery_procedure", "rollback_sla"],
+        "properties": {
+          "control_id": { "type": "STRING" },
+          "control_name": { "type": "STRING" },
+          "activation_trigger": { "type": "STRING" },
+          "containment_protocol": { "type": "STRING" },
+          "recovery_procedure": { "type": "STRING" },
+          "rollback_sla": { "type": "STRING" }
+        }
+      }
+    },
+    "evidence_registry": {
+      "type": "ARRAY",
+      "items": {
+        "type": "OBJECT",
+        "required": ["evidence_id", "evidence_name", "artifact_description", "collection_method", "frequency", "retention_period"],
+        "properties": {
+          "evidence_id": { "type": "STRING" },
+          "evidence_name": { "type": "STRING" },
+          "artifact_description": { "type": "STRING" },
+          "collection_method": { "type": "STRING", "enum": ["Automated", "Manual"] },
+          "frequency": { "type": "STRING" },
+          "retention_period": { "type": "STRING" }
+        }
+      }
+    },
+    "raci_matrix": {
+      "type": "ARRAY",
+      "items": {
+        "type": "OBJECT",
+        "required": ["control_id", "responsible", "accountable"],
+        "properties": {
+          "control_id": { "type": "STRING" },
+          "responsible": { "type": "STRING" },
+          "accountable": { "type": "STRING" },
+          "consulted": { "type": "STRING" },
+          "informed": { "type": "STRING" }
+        }
+      }
+    }
+  }
+}

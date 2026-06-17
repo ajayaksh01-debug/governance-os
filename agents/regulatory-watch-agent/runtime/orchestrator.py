@@ -25,6 +25,8 @@ from audit_logger import AuditLogger
 from state_manager import StateManager
 from schema_validator import SchemaValidator
 from output_builder import OutputBuilder
+from skill_executor import SkillExecutor
+
 
 try:
     import claims_linter
@@ -53,8 +55,12 @@ class Orchestrator:
         self.logs_dir.mkdir(parents=True, exist_ok=True)
         
         # Schema validator
-        schemas_path = repo_root / "workflows" / "schemas"
-        self.validator = SchemaValidator(str(schemas_path))
+        contracts_path = repo_root / "agents" / "regulatory-watch-agent" / "runtime" / "contracts"
+        self.validator = SchemaValidator(str(contracts_path))
+        
+        # Skill Executor
+        self.executor = SkillExecutor(self.runs_dir, self.logs_dir)
+
 
     def _load_config(self) -> dict:
         """Loads configuration from YAML file, handles basic parsing if PyYAML not available."""
@@ -109,21 +115,8 @@ class Orchestrator:
 
     def _generate_traceability_id(self) -> str:
         """Generates a unique TR-RW-{YYYY}-{NNNN} ID by scanning existing run state files."""
-        existing_files = glob.glob(str(self.runs_dir / "TR-RW-*_state.json"))
-        numbers = []
-        current_year = datetime.now(timezone.utc).year
-        for f in existing_files:
-            filename = Path(f).name
-            # Format: TR-RW-2026-0001_state.json
-            if filename.startswith(f"TR-RW-{current_year}-"):
-                parts = filename.split("_")[0].split("-")
-                if len(parts) >= 4:
-                    try:
-                        numbers.append(int(parts[3]))
-                    except ValueError:
-                        pass
-        next_num = max(numbers) + 1 if numbers else 1
-        return f"TR-RW-{current_year}-{next_num:04d}"
+        return self.executor.generate_traceability_id()
+
 
     def start_run(self, trigger_type: str, inputs: dict) -> str:
         """
@@ -216,43 +209,23 @@ class Orchestrator:
             return "eu-ai-act-high-risk-banking"
 
     def _run_skill_1(self, state_mgr: StateManager, logger: AuditLogger, fixture_name: str):
-        """Simulates Skill 1 (regulatory-mapping) and executes Gate 1 & Gate 2 validations."""
+        """Executes Skill 1 (regulatory-mapping) programmatically and executes Gate 1 & Gate 2 validations."""
         trace_id = state_mgr.traceability_id
         state_mgr.transition_to("SKILL_1_RUNNING", "Skill 1 (regulatory-mapping) execution started.")
         logger.log("SKILL_1_RUNNING", "SUCCESS", "Generating Regulatory Scoping Matrix.")
         
-        # Load fixture data
-        fixture_cfg = self.config.get("mock_fixtures", {}).get(fixture_name, {})
-        gs_path = repo_root / fixture_cfg.get("gold_standard")
-        
-        # Read and parse gold standard Markdown
-        gs_content = gs_path.read_text(encoding="utf-8")
-        # Extract everything under Part A up to Part B
-        part_a_marker = "# Part A — Regulatory Mapping Output"
-        part_b_marker = "# Part B — Governance Control Mapping Output"
-        
-        part_a_start = gs_content.find(part_a_marker)
-        if part_a_start == -1:
-            part_a_start = 0
-        else:
-            part_a_start += len(part_a_marker)
-            
-        part_b_start = gs_content.find(part_b_marker)
-        if part_b_start == -1:
-            part_a_content = gs_content[part_a_start:]
-        else:
-            part_a_content = gs_content[part_a_start:part_b_start]
-            
-        s1_md = part_a_content.strip()
-        state_mgr.update_intermediate_data("regulatory_mapping_output_md", s1_md)
-        
-        # Load baseline mapping JSON
-        s1_json = dict(StateManager.MOCK_REGULATORY_JSON.get(fixture_name, {}))
-        
-        # Ingest mock inputs or options (like simulate_gate_1_fail)
         inputs = state_mgr.get_state().get("inputs", {})
         
-        # Execute Gate 1: Schema Validation (with retry support)
+        # Execute skill programmatically
+        s1_json = self.executor.execute_regulatory_mapping(inputs, logger)
+        
+        # Compile structured JSON output into markdown representation
+        risk_tier = s1_json.get("risk_tier", "General Enterprise")
+        s1_md = self.executor.compile_regulatory_mapping_to_markdown(s1_json, risk_tier)
+        
+        state_mgr.update_intermediate_data("regulatory_mapping_output_md", s1_md)
+        
+        # Execute Gate 1: Schema Validation (with retry support) & Firewall check
         passed_gate_1 = self._evaluate_gate_1(state_mgr, logger, s1_json, inputs)
         if not passed_gate_1:
             return
@@ -262,6 +235,7 @@ class Orchestrator:
 
         # Execute Gate 2: Quality Score Check
         self._evaluate_gate_2(state_mgr, logger, s1_json, inputs)
+
 
     def _evaluate_skill_1_firewall(self, state_mgr: StateManager, logger: AuditLogger, md_content: str) -> bool:
         """Executes Claims Firewall check on Skill 1 output."""
@@ -407,46 +381,42 @@ class Orchestrator:
             raise ValueError(f"Invalid approval action: '{action}'")
 
     def _run_skill_2(self, state_mgr: StateManager, logger: AuditLogger):
-        """Simulates Skill 2 (governance-control-mapping) and executes Gates 3 & 4."""
+        """Executes Skill 2 (governance-control-mapping) programmatically and executes Gates 3 & 4."""
         trace_id = state_mgr.traceability_id
         state_mgr.transition_to("SKILL_2_RUNNING", "Skill 2 (governance-control-mapping) execution started.")
         logger.log("SKILL_2_RUNNING", "SUCCESS", "Generating Operational Control Specification.")
         
-        # Load fixture data
         inputs = state_mgr.get_state().get("inputs", {})
-        fixture_name = self._map_to_fixture(inputs)
         
-        fixture_cfg = self.config.get("mock_fixtures", {}).get(fixture_name, {})
-        gs_path = repo_root / fixture_cfg.get("gold_standard")
-        
-        # Read and parse gold standard Markdown (Part B)
-        gs_content = gs_path.read_text(encoding="utf-8")
-        part_b_marker = "# Part B — Governance Control Mapping Output"
-        part_b_start = gs_content.find(part_b_marker)
-        
-        if part_b_start != -1:
-            part_b_content = gs_content[part_b_start + len(part_b_marker):].strip()
-        else:
-            # Generate mock Part B for fixtures that lack it in the gold standards (India/UK)
-            part_b_content = self._generate_mock_part_b_md(fixture_name)
+        # Phase 4 Input Validation: Validate the output of Stage 1 against regulatory mapping schema
+        s1_json = state_mgr.get_state().get("intermediate_data", {}).get("regulatory_mapping_output_json", {})
+        input_errors = self.validator.validate(s1_json, "regulatory_mapping")
+        if input_errors:
+            state_mgr.transition_to("HALTED_GATE_3A_SCHEMA", f"Skill 2 input validation failed: {input_errors}")
+            logger.log("GATE_3A_SCHEMA", "FAILED", f"Skill 2 input validation failed: {input_errors}. Pipeline halted.")
+            return
             
-        # Check if we should simulate a firewall breach
+        # Programmatic execution of Skill 2 using Skill 1 structured outputs
+        s2_json = self.executor.execute_governance_control_mapping(s1_json, logger)
+        
+        # Compile to markdown representation
+        s2_md = self.executor.compile_control_mapping_to_markdown(s2_json)
+        
+        # Check if we should simulate a firewall breach (to preserve unit test behavior)
         if inputs.get("simulate_firewall_breach"):
-            part_b_content += "\n\nHard Rule Violation Check: Visual Agent Builder is currently in build."
+            s2_md += "\n\nHard Rule Violation Check: Visual Agent Builder is currently in build."
             logger.log("SKILL_2_RUNNING", "WARNING", "Simulating Claims Firewall violation.")
             
-        state_mgr.update_intermediate_data("governance_control_mapping_output_md", part_b_content)
-        
-        # Load mock JSON payload for control mapping
-        s2_json = dict(StateManager.MOCK_CONTROL_JSON.get(fixture_name, StateManager.MOCK_CONTROL_JSON["eu-ai-act-high-risk-banking"]))
+        state_mgr.update_intermediate_data("governance_control_mapping_output_md", s2_md)
         
         # Execute Gate 3: Concurrent schema + firewall linter checking
-        passed_gate_3 = self._evaluate_gate_3(state_mgr, logger, s2_json, part_b_content, inputs)
+        passed_gate_3 = self._evaluate_gate_3(state_mgr, logger, s2_json, s2_md, inputs)
         if not passed_gate_3:
             return
 
         # Execute Gate 4: Control Quality Score Check
         self._evaluate_gate_4(state_mgr, logger, s2_json, inputs)
+
 
     def _evaluate_gate_3(self, state_mgr: StateManager, logger: AuditLogger, s2_json: dict, md_content: str, inputs: dict) -> bool:
         """Executes concurrent schema validation (Gate 3a) and Claims Firewall check (Gate 3b)."""

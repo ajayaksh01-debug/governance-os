@@ -20,7 +20,7 @@ class SchemaValidator:
         """Loads available JSON schemas from the schemas directory."""
         schema_files = {
             "regulatory_mapping": "regulatory_mapping_output.json",
-            "control_mapping": "control_mapping_output.json"
+            "control_mapping": "governance_control_output.json"
         }
         for key, filename in schema_files.items():
             path = self.schemas_dir / filename
