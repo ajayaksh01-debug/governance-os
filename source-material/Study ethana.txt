@@ -1,0 +1,331 @@
+ETHANA: THE COMPLETE EDUCATIONAL BRIEFING
+Grounded exclusively in the Board Briefing (May 2026) and Barclays Governance Mapping Document (May 2026)
+
+PART 1 — WHAT ETHANA IS IN ONE SENTENCE
+Ethana is the security and control system that sits between your company's AI tools and the outside world — watching everything that goes in and out, logging it permanently, blocking dangerous things, and giving you evidence for regulators.
+Simple analogy: Imagine your company built a new bank branch. But instead of one front door with a security guard, a camera, a visitor log, and an alarm system — every teller just walked in and out through random fire exits with no record of who came in, what they brought, or what they took out. Ethana is the security system you install at every door. It doesn't replace the tellers. It watches, controls, and records what moves through every door.
+
+PART 2 — THE CORE PROBLEM ETHANA IS TRYING TO SOLVE
+The 7 Real Problems (From the Board Briefing)
+Problem 1: Shadow AI is everywhere and nobody knows.
+Picture this: 500 employees at your bank are using ChatGPT, Gemini, Copilot, Cursor, and Claude — some personal accounts, some company-paid, some just browser tabs. The CISO has no list of these tools. No idea who uses what. Customer data, internal policy documents, and confidential code are being pasted into these tools every single day. Nobody knows, nobody stops it, nobody logs it.
+That is the "Shadow AI" problem. It's not theoretical. The Barclays Governance Mapping document confirmed it: the bank had AI systems running in production — including a CV screener, a mortgage tool, a call summarisation pipeline — none of which were on a single governance register.
+Problem 2: No audit trail means no defence.
+In the Barclays Help Hub RAG case (contact centre agents using an AI assistant to answer customer queries), regulators from the FCA require banks to be able to reconstruct exactly what happened during a customer complaint — what the agent was told by the AI, what document the AI retrieved, what the model said. There was no such record. Zero. If a complaint was filed, Barclays couldn't prove anything.
+Problem 3: AI agents are acting autonomously with human permissions.
+When an AI agent books a calendar slot, reads a document, or queries a database on your behalf — it currently uses your full employee identity and full employee permissions. If that agent is compromised, the attacker gets everything you have access to. There's also no way to tell, in the audit log, whether the action was taken by you or by an AI acting in your name.
+Problem 4: Normal security tools don't understand AI traffic.
+Your company's firewall blocks bad websites. Your antivirus finds malware. But neither of those tools understands what a "prompt injection" is. They don't know that a customer submitted a query designed to trick your AI assistant into leaking other customers' data. Traditional security tools are blind to AI-specific attacks.
+Problem 5: Compliance pressure is now real, not theoretical.
+The EU AI Act is in enforcement. ISO 42001 audits are happening. Banks' boards are being asked about AI risk reporting. As the briefing states directly: "No tool produces the evidence end-to-end." That is the gap Ethana positions itself to fill.
+Problem 6: Developer tools are completely unmonitored.
+Engineering is the highest AI spend department and the most invisible one. Every developer has direct API keys. Code is being shared with AI models. Secrets are being leaked into prompts. Nobody can see any of it.
+Problem 7: When employees leave, their AI accounts stay active.
+Someone leaves the bank. Their ChatGPT Enterprise, Copilot, and Cursor accounts remain active, licensed, and accessible. Ethana's SCIM provisioning automates offboarding across AI vendors — but this is on the roadmap, not in production today.
+
+PART 3 — THE 3 MAIN PRODUCT LINES EXPLAINED LIKE REAL LIFE
+
+ETHANA BUILD — "Govern the AI apps your company builds"
+The analogy: Your bank built a phone app for mortgage applications. That app calls an AI model every time a customer submits a valuation. Ethana Build is the security checkpoint that every one of those AI calls passes through before reaching the model — and every response passes through on the way back.
+What it watches: API calls your company's own applications make to AI models (OpenAI, Anthropic, Azure, Google, your own self-hosted models).
+What it controls: Who can call which model, how often, at what cost, with what restrictions on what data can go in or come out.
+What it logs: Every single call — timestamp, what was sent, what was received, who sent it, which model responded, how much it cost.
+What it CANNOT see: What happens inside the model itself. What happens in the customer-facing UI (the app screen). Whether the human actually read the AI's output. Whether the AI's answer was correct in terms of real-world accuracy or business logic.
+Who inside a bank would use it:
+	•	Head of AI / CTO — to standardise AI infrastructure across all internal apps
+	•	Compliance — to generate audit evidence for regulators
+	•	Engineering teams — to implement governance once, not rebuild it per application
+Best Barclays fit: The Mortgage Rate Selector (SYS-001) and Help Hub RAG (SYS-003) — both strong fits where Build Gateway directly addresses the missing audit trail.
+Status: In production. Multi-tenant LLM gateway with routing, fallback, per-call cost tracking, and CallTrace shipped.
+
+ETHANA SENTRY — "Govern how your employees use AI tools"
+The analogy: Your employees are bringing their own AI tools to work — ChatGPT tabs open in Chrome, Cursor running in their IDE, Claude Desktop installed on their laptop. Ethana Sentry is the security and inventory system for that problem. It finds out what they're using, puts it on a register, blocks the dangerous ones, and tracks what data is flowing to them.
+What it watches: Network traffic leaving the company to AI SaaS services (ChatGPT, Claude, Gemini, Copilot etc.)
+What it controls: Whether an employee can access specific AI tools; whether a particular type of data (e.g. customer PII) can flow to unsanctioned tools.
+What it logs: Which employees accessed which AI tools, when, and what categories of content were transmitted.
+What it CANNOT see: The actual content of prompts if end-to-end encryption is used (this is a real limitation of network-layer tools). What happens inside the employee's head. Whether the employee acted on the AI output correctly.
+Who inside a bank would use it:
+	•	CISO — Shadow AI inventory and network-level control
+	•	Procurement / FinOps — licence usage visibility and waste detection
+Status: Discovery (the core of Sentry) is still in build. The connector layer is being built. Identity Provider connector is first. The AI Firewall (network egress control) is also in build. This is the most roadmap-heavy product line in the suite.
+
+ETHANA EDGE — "Govern AI at the source — on the device"
+The analogy: Sentry watches the building's exits. Edge is the security checkpoint at each person's desk. It lives on the employee's laptop, in their browser, in their IDE. It catches AI traffic before it even reaches the network.
+What it watches: IDEs (Cursor, VS Code), browsers (Chrome, Edge, Arc), CLI agents (Claude Code, GitHub Copilot), system-level AI traffic.
+What it controls: Enforces governance policies locally — even when the laptop is offline.
+What it logs: Installed AI tools, policy verdicts, blocks and coaching events — feeds back to Sentry's Discovery inventory.
+What it CANNOT see: Traffic from personal devices on personal networks. AI tools that run fully local (no API call to an external endpoint).
+Who inside a bank would use it:
+	•	CISO — endpoint-level AI control, especially for developer laptops
+	•	IT Security — MDM-deployable via Jamf / Intune
+Status: In build. Endpoint agent (Mac, Linux, Windows), browser extension, and dev-tool config push are all in the build column. Not in production.
+
+PART 4 — EVERY MAJOR CAPABILITY EXPLAINED LIKE A CHILD
+
+GATEWAY
+What it is: A "middle layer" that all your AI application calls pass through. Instead of your mortgage app calling OpenAI directly, it calls Ethana, and Ethana calls OpenAI. On the way back, the response comes through Ethana first.
+Why enterprises care: Without a gateway, you have no central record of what your applications are asking AI models, no ability to stop dangerous requests, no cost control, and no audit trail.
+Real Barclays example: The Mortgage Rate Selector sent calls to an AVM (Automated Valuation Model) API with zero event-level logging. FCA SYSC 9 requires 7 years of records. Those records didn't exist. Routing through Ethana's gateway would have created them automatically.
+What Ethana controls: Routing, fallback, rate limits, virtual keys, user attribution, cost tracking.
+What Ethana DOES NOT control: What the model actually decides. The quality of the model's output. Whether the model is biased. What the application does with the response after receiving it.
+Capability status: STRONG — in production. This is the most mature capability in the suite.
+
+GUARDRAILS
+What it is: Automated scanners that check every prompt going IN and every response coming OUT. Like a metal detector at an airport — except it scans for dangerous content, not metal.
+Six native scanners:
+	•	Secrets & PII (stop customer data leaking into AI models)
+	•	Prompt Injection (stop attackers hiding malicious instructions in text)
+	•	Jailbreak detection (stop users trying to bypass AI safety rules)
+	•	Toxicity (block harmful content)
+	•	Bias detection
+	•	Hallucination grounding (check if the AI's answer is actually supported by the documents it retrieved)
+Why enterprises care: In the Barclays RAG case, contact centre agents were pasting customer account numbers into AI queries. No technical control stopped them. One PII guardrail on inbound prompts would have masked that data automatically, with zero engineering change in the application.
+What Ethana controls: Block, redact, allow, or log — on every API call, in both directions, at sub-200ms latency.
+What Ethana DOES NOT control: Whether the underlying model is biased in its training. The quality of the knowledge base the model retrieves from. Human behaviour in a UI Ethana doesn't sit inside.
+Capability status: STRONG — all six scanners in production. Sub-200ms p95 confirmed in briefing.
+
+RED TEAMING
+What it is: An automated "attack simulator." It deliberately tries to break your AI application the same way a malicious user or hacker would — to find weaknesses before your customers or attackers do.
+Think of it like this: Before you open a bank vault, you hire someone to try to crack it. Red teaming does the same for AI systems.
+21 OWASP probe library attacks are built in. It targets three types of things: raw models, LLM-powered apps, and AI agents.
+Why enterprises care: The Barclays Help Hub RAG system had no continuous testing. No one knew whether a bad actor could use prompt injection to extract other agents' queries or internal policy documents. Red teaming finds that before it becomes an FCA incident.
+What Ethana controls: Generates findings, suggests policy rules, and can block CI/CD deployments (i.e. prevent new code from being released if a security test fails).
+What Ethana DOES NOT control: Bias in ML model weights. ASR accuracy. Real human attackers using novel techniques not in the probe library.
+Capability status: PARTIAL. Orchestrator + 21 OWASP probes in production. CI/CD gate is still in build.
+
+DISCOVERY
+What it is: An inventory builder. It connects to six data sources (identity provider like Okta, SaaS vendor APIs like ChatGPT Enterprise, code repos like GitHub, cloud agents like Bedrock, endpoint telemetry from Edge, firewall logs) and stitches them into a single list: "Here is every AI tool in your organisation, and here is the employee email address next to it."
+Why enterprises care: As confirmed by Barclays' own governance failures — the Exllena CV screener, the Mortgage Rate Selector, the COI pipeline — none of these were on any governance register. Governance was applied reactively, post-build, at maximum cost. Discovery is the foundational fix.
+What Ethana controls: Produces an AI Inventory, risk-scores each tool (sanctioned vs shadow), and can auto-trigger Red Teaming when a new tool is discovered.
+What Ethana DOES NOT control: Tools used on personal devices and personal networks. AI models running fully locally with no API call. The quality or compliance posture of the AI tools it discovers.
+Capability status: IN BUILD. Connector layer is being built. Identity Provider connector is first. This is roadmap for the critical seven-connector families. Honest position: don't promise this capability in a bank deployment today.
+
+AI FIREWALL
+What it is: Network-layer control over which AI services employees can reach from company devices or networks. Like a website filter, but specifically built for AI services. It can allow, block, or "coach" (show the employee a message pointing them to the approved alternative).
+Why enterprises care: If an employee opens a ChatGPT tab and pastes a customer complaint letter into it, that data has left the building with no record and no control. The Firewall stops or logs that at the network level.
+What Ethana controls: Domain-level access, per-user quotas, content-level DLP (Data Loss Prevention) on flagged egress traffic.
+What Ethana DOES NOT control: AI tools that run locally on device with no network call. HTTPS traffic it cannot inspect without SSL decryption (standard limitation of all network-layer DLP tools). Personal devices on personal networks.
+Capability status: IN BUILD. Integrates with Zscaler, Netskope, Palo Alto — or runs standalone via Edge. Not in production today.
+
+MCP BROKER
+What it is: MCP stands for "Model Context Protocol" — it's a standard way for AI agents to use tools. When an AI agent needs to read your calendar, query a database, or post to Slack, it uses an MCP tool call. Ethana's MCP Broker is the security checkpoint that every one of those tool calls passes through.
+Think of it like this: A security guard who checks the ID of every person (or agent) going into the archive room, logs every document they access, and prevents them from accessing more than they're authorised for.
+Why enterprises care: The briefing states clearly: "Agents call internal tools autonomously. MCP servers ship without provenance. When something goes wrong there is no record of who did what, with which tool, on whose behalf." This is a live production risk right now for any bank deploying agents.
+What Ethana controls: Server registry, hosted runtime, tool allow-list, rate limits, per-call tracing.
+What Ethana DOES NOT control: Agent behaviour at the model level. Whether the agent interprets tool output correctly. Actions taken by agents outside MCP (e.g. direct API calls that bypass the broker).
+Capability status: PARTIAL. ~8,000 lines in production, per-call tracing shipped. Non-Human Identity (NHI) and ephemeral tokens — the critical identity features — are still in build.
+
+AUDIT LOGS
+What it is: A permanent, tamper-proof record of everything that passed through Ethana. "Insert-only" means records can be written but never deleted or changed. Like a bank's CCTV footage — you can't rewind and edit the tape.
+Why enterprises care: In every single Barclays use case assessed, the absence of event-level audit logging was cited as a governance failure. FCA SYSC 9 requires 7 years of records. EU AI Act Art.12 requires logging of high-risk AI system interactions. GDPR Art.5 requires data accuracy records. Without immutable logs, a bank cannot defend itself to any regulator.
+What Ethana controls: Insert-only event store, multi-tenant, with SIEM forwarding to Splunk/Elastic/Datadog. Retention controls configurable.
+What Ethana DOES NOT control: What happened before the traffic entered Ethana. The content of calls that bypassed the gateway. Whether the log schema captures the exact fields a specific regulator requires (this requires schema configuration work with the bank's data architecture team — confirmed in Barclays SYS-001 integration notes).
+Capability status: STRONG — in production. This is Ethana's clearest and most consistent enterprise value across all five Barclays use cases. The Barclays document calls it explicitly: "Ethana's clearest enterprise value proposition."
+
+PROMPTOPS
+What it is: Version control for the instructions you give AI models (called "system prompts"). Like Git for your AI's brain instructions. Every change is tracked. You can roll back to a previous version if a change causes problems.
+Why enterprises care: In the Barclays Call Summarisation case (SYS-004), the agent feedback loop was training the model to omit complaint and vulnerability disclosures — potentially degrading compliance quality with every retraining cycle. PromptOps version history would allow 1LOD governance teams to attribute compliance quality changes to specific prompt changes.
+What Ethana controls: Centralized system prompt versioning, rollback capability, change audit trail.
+What Ethana DOES NOT control: Model weights, training data, RLHF feedback loops, or model behaviour outside the system prompt.
+Capability status: MODERATE. Present in the platform but not a standalone selling point. Useful within the broader Build governance story.
+
+FINOPS
+What it is: Cost tracking and waste detection for AI spending. Per-user, per-team token spend, GPU costs, and identification of dormant licences (employees who left but still have active ChatGPT/Copilot accounts).
+Why enterprises care: The briefing is explicit: "There is no per-user attribution, no quota, no way to see which team is burning the spend — or whether the licence is even being used." CFOs are asking this question right now.
+What Ethana controls: Token spend tracking per tenant/project, alert hooks on budget thresholds, dormant licence identification.
+What Ethana DOES NOT control: Cost at the cloud infrastructure level (GPU/compute costs outside AI API calls). SaaS vendor pricing negotiations. Spend on AI tools that bypass the gateway.
+Capability status: IN BUILD. Per-tenant/per-project cost tracking shipped in production. Full FinOps (per-user, per-team, dormant licence detection) is on the roadmap.
+
+NON-HUMAN IDENTITY (NHI)
+What it is: A separate identity for AI agents — so they don't have to borrow a human employee's login credentials.
+Today, when an AI agent acts on your behalf, it typically uses your full employee account. If the agent is compromised, the attacker has your full access. There's also no way to tell from the audit log whether an action was taken by you or by an agent acting as you.
+NHI gives each agent its own short-lived, scoped identity — like a contractor badge that only works in specific rooms and expires at midnight.
+Why enterprises care: The briefing states: "A compromised agent is a compromised user." For a bank, where a user might have access to sensitive customer data, trading systems, or internal policy documents, this is a critical security risk.
+What Ethana controls: Non-human identity issuance, ephemeral token management (OAuth 2.0 Token Exchange / SPIFFE patterns), on-behalf-of delegation, agent-level audit trails.
+What Ethana DOES NOT control: Agent behaviour at the model level. Actions taken by agents that bypass the identity broker.
+Capability status: IN BUILD. This is explicitly listed in the "What We're Building" column of the board briefing. Do not position as available today.
+
+PART 5 — WHAT ETHANA DOES NOT SOLVE
+This is where most salespeople fail. Read this section carefully.
+
+"Ethana is NOT a bias auditing platform"
+The Exllena CV Screening case:
+T Finance deployed a CV ranking tool that was processing proxy variables (university name, location) replicating socioeconomic discrimination. The primary regulatory blockers were NYC Local Law 144 (independent bias audit required) and EU AI Act Art.10 (bias testing of training data).
+What does Ethana do here? It can log every API call to the ranking engine. It can mask PII fields before they reach the vendor. It can tell you how many candidates were processed.
+What it cannot do: It cannot inspect the ML model's weights. It cannot test whether the model produces disparate outcomes across demographic groups. It cannot run the bias audit that NYC LL144 requires. The Barclays document is explicit: "Ethana does not inspect ML training data, test disparate impact across demographic groups, or validate vendor AI Act conformity. These require specialist third-party auditing firms."
+
+"Ethana is NOT a GRC platform"
+The document states this directly in its opening disclaimer: "Ethana is NOT a GRC platform, a vendor compliance assessment tool, or a bias auditing framework."
+GRC (Governance, Risk & Compliance) platforms like Archer or ServiceNow manage your organisation's entire risk register, policy library, control frameworks, and compliance documentation. Ethana produces evidence that feeds INTO a GRC platform. It does not replace it.
+
+"Ethana cannot fix bad processes"
+The COI Automation case:
+The Barclays COI (Certificate of Interest) pipeline was a rules-based SQL extraction system generating tax documents for customers. The governance gap was zero continuous monitoring between annual runs — a silent pipeline change could corrupt an entire customer population's tax documents.
+Ethana's honest fit here is weak. The document states: "For SYS-002, Ethana is not the right tool. The monitoring gap requires: (1) a monthly reconciliation job, (2) transaction code monitoring via database change detection, (3) boundary condition regression tests. These are data engineering and DQ tooling problems, not AI governance platform problems."
+This matters. When a bank's risk team asks "can Ethana cover our legacy rules-based systems?" — the honest answer is: partially, through Discovery inventory — but not through gateway or guardrails, because there's no AI API call for Ethana to intercept.
+
+"Ethana cannot force human oversight"
+The Mortgage Rate Selector case:
+GDPR Art.22 requires three safeguards for automated significant decisions: (1) an explanation mechanism, (2) a human review route, and (3) a contest process. The mortgage app had none of these.
+Ethana's audit logs can prove what data was used for each decision. But: "Ethana does not solve GDPR Art.22. The three required safeguards — explanation mechanism, human review route, and contest process — are UX redesign and process problems. Ethana logs what happened but does not enforce that a human review step exists in the customer journey."
+The distinction: Ethana can log that no human reviewed the decision. It cannot make a human review happen. It cannot build the "contest this decision" button in the app.
+
+"Ethana cannot govern knowledge base quality"
+The Help Hub RAG Assistant case:
+The contact centre RAG tool had an ungoverned knowledge base — anyone could add documents, policy could go stale, drafts could be retrieved alongside approved content. Ethana's guardrails and audit logs address the LLM interaction layer brilliantly here.
+But: "Ethana does not solve the knowledge base governance problem. Ethana has no visibility into what documents are in the vector database or when they were last updated."
+The content approval workflow — who approves documents, when they expire, version control on policy content — requires a CMS-integrated governance process (Confluence, SharePoint). That's outside Ethana's architecture entirely.
+
+"Ethana cannot solve GDPR Art.22 by itself"
+Covered above under Mortgage case. Worth repeating as a standalone truth because banks will try to use Ethana as an Art.22 compliance tool. It isn't. It's part of the evidence layer, not the safeguards layer.
+
+"Ethana is weak for rules-based systems"
+The COI pipeline, legacy decisioning engines, SQL-based batch processes — Ethana's gateway architecture is designed for model API calls. For deterministic, non-LLM systems, the fit is limited to Discovery (inventory visibility) only. Any bank with a large estate of legacy automated systems needs to understand this boundary clearly.
+
+PART 6 — PRODUCTION REALITY VS MARKETING
+Capability
+In Production Today
+In Build / Roadmap
+Likely Enterprise Maturity
+Questions a Bank Would Ask Before Trusting It
+Gateway (LLM proxy)
+✅ Yes — multi-tenant, routing, fallback, CallTrace, cost tracking
+—
+High — core architecture proven
+"Can it proxy non-LLM REST APIs (AVM, NLP classifiers)? What's p95 latency under batch load?"
+Guardrails (6 scanners)
+✅ Yes — Secrets, PII, Prompt Injection, Jailbreak, Toxicity, Bias
+—
+High — sub-200ms p95 confirmed
+"Can rules target specific JSON field keys? What's the false positive rate on PII detection at volume?"
+Immutable Audit Log
+✅ Yes — insert-only, multi-tenant
+—
+High
+"Is it write-once at DB layer? Can schema be customised for FCA SYSC 9 fields? Retention configurable to 7 years?"
+Red Teaming
+✅ Orchestrator + 21 OWASP probes
+CI/CD gate in build
+Medium — probes available, pipeline integration incomplete
+"What's the probe coverage for RAG-specific attacks? Can it test non-LLM ML classifiers?"
+MCP Broker
+✅ Registry, runtime, per-call tracing, admin UI
+NHI + ephemeral tokens in build
+Medium — core broker works, identity feature missing
+"When does NHI ship? Without it, agent identity separation isn't solved."
+Account Management
+✅ Tenants, projects, RBAC, SSO (OIDC)
+SCIM provisioning in build
+Medium — SSO works, automated offboarding not yet
+"SCIM timeline? Automated AI vendor offboarding is a hard requirement."
+Cost & Budget Tracking
+✅ Per-tenant, per-project, alert hooks
+Per-user / per-team FinOps in build
+Medium
+"Can we get per-user attribution today, or is that roadmap?"
+Discovery
+❌ Not in production
+Connector layer in build, IdP first
+Low — early stage
+"Which connectors are live? What's the timeline for ChatGPT Enterprise and GitHub connectors?"
+AI Firewall
+❌ Not in production
+In build — Zscaler/Netskope integration
+Low
+"SSL inspection capability? What happens to encrypted traffic we can't inspect?"
+Ethana Edge (endpoint agent)
+❌ Not in production
+Mac/Linux/Windows agent + browser extension in build
+Low
+"MDM deployment tested? Browser store approval timeline for Chrome extension?"
+Governance Policy Engine
+❌ Not in production
+OPA/Rego-based, signed bundles — in build
+Low
+"Without the policy engine, how are guardrail rules managed today?"
+Compliance Evidence Export
+❌ Not in production
+EU AI Act, ISO 42001, NIST AI RMF one-click export in build
+Low
+"What does the evidence package actually look like? What does it cover?"
+NHI for Agents
+❌ Not in production
+OAuth 2.0 Token Exchange / SPIFFE — in build
+Low
+"Timeline? This is a prerequisite for any agent deployment in a regulated bank."
+Compliance Certifications
+❌ Not certified
+SOC 2 Type II, ISO 27001, HIPAA-ready — in progress
+Critical gap for BFSI
+"TPRM assessment requires SOC 2. What's the certification timeline? Banks need 6–12 weeks for vendor security review."
+On-Prem Deployment
+Supported (stated)
+Enterprise features standard
+Unproven at bank scale
+"Has this been stress-tested in a G-SIB data centre environment? What does the deployment topology look like?"
+
+PART 7 — ETHANA LIKE REAL ENTERPRISE POLITICS
+Why CISOs Would Care
+The CISO's nightmare is the inventory problem. They have no idea what AI tools are in use, what data is flowing to them, or which ones are a security incident waiting to happen. The board briefing calls this out directly — hundreds of AI tools, employees signing up through browser tabs, direct API keys with no central control.
+Ethana's Discovery + Sentry story is the CISO entry point. The problem is: this is the most roadmap-heavy part of the product. The CISO will ask for a live demo of the AI inventory populating from their Okta and ChatGPT Enterprise accounts. You need to be prepared for the answer to be "that connector is in build."
+Secondary CISO angle: the AI Firewall story (network egress control for AI services) is strong conceptually — but it's also in build. The CISO may have Zscaler already and ask whether this can integrate. That's the right conversation, but the product isn't there yet.
+Why CROs Would Care
+The CRO's nightmare is deployer liability under EU AI Act Art.26, FCA Consumer Duty, and GDPR Art.22. The bank is responsible — even when it deploys a third-party AI system. The Barclays document makes this concrete: five production AI systems, all with regulatory exposure, none with adequate audit trails.
+Ethana's immutable audit log + SIEM integration is the CRO entry point. This is the most production-ready part of the suite. The Mortgage Rate Selector case is the cleanest illustration: the exact data used for each decision, timestamped, immutable, queryable, SIEM-forwarded. That's a direct answer to FCA SYSC 9 and EU AI Act Art.12.
+The CRO will also immediately ask: "Does this solve Art.22?" The honest answer is no — Ethana provides the audit evidence, not the safeguards. Don't oversell this or you will lose credibility permanently.
+Why Compliance Teams Would Care
+Compliance teams are living in spreadsheets, trying to manually document what AI systems exist and what controls are in place. The COI Automation case illustrates this — the system wasn't even on the governance register because it didn't fit the narrow "AI" definition, despite being a consequential automated system affecting millions of customers.
+Ethana's positioning here is the one-click compliance evidence export (EU AI Act, ISO 42001, NIST AI RMF) — but this is in build. In the meantime, the audit log + SIEM integration story is still compelling because it converts what's currently a manual evidence-collection exercise into an automated, tamper-proof record.
+Why Engineering Teams May Resist It
+Engineering teams will have three objections:
+	•	Latency. Adding another network hop to every AI API call adds latency. Ethana claims sub-200ms for guardrails, but engineering will demand p95 latency benchmarks under their actual load (the contact centre RAG case specifically flags this — live call latency is non-negotiable).
+	•	Another infrastructure dependency. Engineering already manages API gateways (Kong, Apigee). They'll ask why Ethana is different. The answer — governance-native design with immutable logs, guardrails, and compliance export built in — is real, but engineering will need to see it proven.
+	•	Vendor lock-in on prompt routing. If all your AI calls go through Ethana, you've made Ethana a critical path dependency. What happens if Ethana has downtime?
+Why Procurement Will Slow Deals
+Three blockers every bank procurement will raise:
+	•	SOC 2 Type II — not certified yet. This is a hard gate for G-SIB banks. The briefing acknowledges it's in progress. Barclays' own governance mapping notes: "G-SIB banks will require vendor security review of Ethana itself before any data routes through it — plan 6–12 weeks for TPRM assessment."
+	•	Contractual data residency. If the immutable audit log sits on Ethana's cloud, FCA-regulated data can't live there. VPC or on-prem deployment is the only viable option for a UK bank — and that needs to be the default positioning, not an option.
+	•	Proof of production scale. Enterprise procurement will ask for reference customers. The honest answer on Ethana's current stage should be framed as: early-stage, founder access, customisation opportunity, not an established enterprise reference list.
+Why Banks Fear Vendor Lock-In
+If Ethana becomes the single front door for all your AI model calls, you've created a single point of failure and a single point of dependency. What happens when you want to change your guardrail vendor? What happens when Ethana raises prices? What happens if the company gets acquired?
+The counter-argument — vendor-neutral architecture, model switching without rewrites, on-prem deployment — is real and differentiated. But procurement and architecture teams will pressure-test it hard.
+Why Latency Matters
+The Help Hub RAG case makes this explicit: contact centre agents are on live calls. Every millisecond of latency in the guardrail stack translates to a worse customer experience. The p95 latency claim of sub-200ms needs to hold under production load with the full guardrail stack (PII + hallucination grounding simultaneously) on a high-volume synchronous RAG pipeline. Ask for the benchmark data before making this commitment.
+Why On-Prem Matters
+Every single Barclays use case that reached the deployment consideration section had the same conclusion: "On-prem or VPC deployment is non-negotiable." Call content is GDPR personal data. Mortgage data is FCA-regulated. Customer query data cannot route through an external cloud. For any BFSI deployment, on-prem or VPC should be the default offer, not the premium add-on.
+
+PART 8 — THE 10 MOST IMPORTANT TRUTHS ABOUT ETHANA
+These are the truths you must understand before you attempt to sell Ethana into a regulated enterprise. Not marketing. Not positioning. Operational reality.
+
+TRUTH 1: Ethana's strongest value is the immutable audit log. Everything else is additive.
+Across all five Barclays use cases, the absence of event-level audit logging was cited in every single one. The Gateway + Immutable Audit Log combination is the only capability that is production-ready AND consistently maps to a hard regulatory requirement (FCA SYSC 9, EU AI Act Art.12, GDPR Art.5) AND is not available as a native feature of standard API gateways. This is the opening line in every regulated enterprise conversation.
+
+TRUTH 2: The two most headline capabilities — Discovery and the AI Firewall — are both in build.
+Shadow AI inventory and network egress control are exactly what CISOs want to talk about. They're also not in production. When a CISO asks for a live demo of the Shadow AI inventory populating from their Okta environment, you cannot deliver it today. Know this. Don't oversell it. Position it as the roadmap and earn credibility by being honest about it.
+
+TRUTH 3: Ethana works best when there is an LLM API call to intercept. For legacy rules-based systems, the fit is weak.
+The COI Automation case demonstrates this clearly. The bank has hundreds of consequential automated systems that don't use LLMs. For those, Ethana's Discovery (inventory visibility) is the only applicable capability. The gateway, guardrails, and audit log are irrelevant. When a bank's risk team asks about their legacy estate, the honest answer is "Ethana is the right tool for your LLM-based applications; for legacy systems, it's an inventory and risk classification tool."
+
+TRUTH 4: Ethana is a control layer, not a compliance platform. A CRO will expect more than Ethana delivers.
+The Barclays governance mapping document opens with this explicitly. Ethana produces evidence. It does not design the governance framework, manage the vendor compliance assessment, run the bias audit, enforce GDPR Art.22 safeguards, or produce the GRC policy documentation. A CRO who expects a compliance platform will be disappointed. Position correctly from the first conversation.
+
+TRUTH 5: SOC 2 Type II is the procurement gate for BFSI. It's in progress, not achieved.
+Every large bank runs a Third Party Risk Management (TPRM) process before allowing any vendor to handle data that passes through their systems. SOC 2 Type II certification is typically the minimum gate. Without it, the sales cycle stalls at procurement regardless of how good the product is. Plan for a 6–12 week TPRM assessment and build that into deal timelines. This is confirmed in the Barclays mapping document.
+
+TRUTH 6: Non-Human Identity (NHI) is the most strategically important feature — and it's in build.
+The AI agent identity problem (agents inheriting human credentials, no agent-level audit trail, compromised agent = compromised user) is an unsolved problem at every enterprise deploying agents. It's the most defensible and differentiated positioning in the suite. It's also explicitly in the "What We're Building" column. Don't lead with it as a current capability. Lead with it as the strategic direction.
+
+TRUTH 7: The RAG Assistant case (SYS-003) is the strongest sales reference in the portfolio — but Ethana only solves 3 of 5 blockers.
+The Help Hub RAG case is Ethana's best enterprise narrative. Strong Gateway fit, strong audit log fit, strong PII guardrail fit, strong hallucination detection fit. Use it. But be explicit: Ethana does not solve the knowledge base content governance problem (BLOCKER 1 and BLOCKER 2 in the Barclays assessment). The KB content approval workflow requires a separate CMS-based governance process. If a bank buys Ethana thinking it will fix their RAG knowledge base problem entirely, they will be disappointed and you will have destroyed trust.
+
+TRUTH 8: Guardrail rules for regulated industries require compliance SME input — not just engineering configuration.
+The Barclays documentation is clear: guardrail rules for regulatory topics (mortgage policy, FCA complaint procedures, MCOB rules) need to be configured by compliance subject matter experts, not engineers. This has implementation and professional services implications. Factor it into deal structuring and don't underestimate the organisational change management required.
+
+TRUTH 9: Ethana cannot govern what it cannot see — and there is a lot it cannot see.
+It cannot see: AI traffic on personal devices on personal networks. The inside of ML model weights. The quality or currency of documents in a vector database. Human behaviour in a UI it doesn't control. Whether an agent acted correctly on tool output. The content of encrypted HTTPS traffic it can't intercept. These are real capability boundaries that must be communicated honestly, not buried in small print.
+
+TRUTH 10: The enterprise deployment reality for a G-SIB bank is not a self-serve onboarding. It is a 6–18 month engagement.
+Between TPRM assessment (6–12 weeks), data residency requirements (VPC/on-prem only), architectural change management (every API endpoint redirect requires CTO review), compliance SME involvement in guardrail configuration, SIEM integration, schema design for FCA-specific audit fields, and organisational change management for governance workflows — this is not a product that a bank deploys in a week. The Barclays mapping document surfaces this reality across all five use cases. Any sales motion that implies otherwise will collapse at procurement.
+
+All analysis grounded exclusively in the Ethana Board Briefing (May 2026) and the Ethana-Barclays Governance Capability Mapping document (Ajay Raj Singh, 1LOD AI Governance, May 2026). No capabilities claimed beyond what those two documents confirm.
+

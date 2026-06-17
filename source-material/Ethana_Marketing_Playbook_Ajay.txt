@@ -1,0 +1,327 @@
+
+ETHANA
+Enterprise AI Control Plane
+
+MARKETING PLAYBOOK
+Positioning · Messaging · ICP · Competitive Handling · Sales Plays
+
+Confidential — Internal Use Only
+Version 1.0  ·  June 2026
+
+1. Platform Overview
+Ethana is an Enterprise AI Control Plane. It helps organizations discover, govern, monitor, secure, and scale AI adoption across employees, applications, agents, and infrastructure.
+
+The platform consists of three integrated products that share a unified governance, audit, compliance, and observability layer:
+
+Ethana Edge
+Ethana Workspace
+Ethana Build
+Endpoint AI Monitoring
+
+	•	AI discovery & shadow AI
+	•	Browser AI monitoring
+	•	Developer tool monitoring
+	•	Prompt & response visibility
+	•	AI asset inventory
+	•	Per-user attribution
+	•	Compliance audit logs
+	•	Security & blocking (roadmap)
+Governed AI Workspaces
+
+	•	Enterprise chat & collaboration
+	•	Knowledge-grounded assistants
+	•	RAG on internal documents
+	•	Department AI copilots
+	•	Self-hosted / air-gapped
+	•	Role-based access control
+	•	Immutable prompt/response logs
+	•	Document drafting & workflows
+AI Infrastructure & Control
+
+	•	OpenAI-compatible LLM gateway
+	•	Multi-model routing & fallback
+	•	Guardrails & PII masking
+	•	PromptOps & versioning
+	•	Evaluation & hallucination testing
+	•	MCP lifecycle management
+	•	Agent orchestration & DAG builder
+	•	Observability & cost tracking
+$10,000 / year
+$10,000 / year
+$30,000 / year
+
+Key positioning principle: Ethana is not a chatbot, not a RAG tool, not an LLM gateway alone, and not a compliance checklist. It is the operational control layer that enterprises need to govern AI across every surface — endpoints, workspaces, and the applications they build.
+
+2. Market Positioning
+2.1  The Problem Ethana Solves
+Enterprise AI adoption is outrunning the controls organizations have in place. Three failure modes are appearing simultaneously:
+
+	•	Shadow AI at the endpoint — employees and developers are using ChatGPT, Claude, Gemini, Copilot, Cursor, and dozens of AI browser extensions every day, often with sensitive data, with no organizational visibility.
+	•	No governed workspace for sensitive AI work — when organizations try to use AI on internal knowledge, they lack an auditable, access-controlled environment. Consumer AI tools are used instead, creating data and compliance risk.
+	•	Ungoverned AI infrastructure — teams building internal AI applications and agents have no centralized layer for model management, prompt governance, guardrails, or evaluation. Each team builds ad hoc.
+
+2.2  Platform Positioning Statement
+Ethana is the Enterprise AI Control Plane — the unified layer through which organizations discover what AI is being used, govern how it is used, and build the AI systems they need, all under a shared compliance and audit framework.
+
+2.3  Category Relationships
+Ethana spans several established software categories. This is a strength, not a liability — it means a single platform replaces or consolidates multiple point solutions:
+
+	•	AI Gateway — Ethana Build includes a production-grade, OpenAI-compatible gateway with multi-model routing.
+	•	AI Observability — shared across all three products; end-to-end tracing, usage analytics, and operational dashboards.
+	•	AI Governance & Security — shared compliance layer covering audit logging, usage attribution, and access controls. PII masking and guardrails are available in Build and Workspace; Edge enforcement is on the roadmap.
+	•	Enterprise AI Chat — Ethana Workspace provides a self-hosted, governed chat and knowledge platform.
+	•	AI Security / CASB — Ethana Edge provides endpoint and browser-level AI visibility, equivalent to a next-generation AI-aware CASB.
+	•	Agent Development Platform — Ethana Build includes a visual agent builder, MCP lifecycle management, and workflow orchestration.
+
+3. Ideal Customer Profile (ICP)
+3.1  Firmographic Fit
+	•	Annual revenue above $50M, or significant AI developer footprint
+	•	Regulated industry or contractually obligated to demonstrate AI accountability
+	•	Workforce of 200+ employees where shadow AI is statistically certain
+	•	Technology or engineering team actively building AI applications or deploying agents
+	•	Preference for on-premises, VPC, or air-gapped deployment over SaaS-only solutions
+
+3.2  Target Segments by Priority
+Segment
+Primary Buyer
+Key Pain
+Entry Product
+BFSI
+CISO / CIO
+Regulatory AI audit registers (RBI, SEBI, IRDAI, DPDP)
+Edge
+Insurance
+CISO / Head of Compliance
+IRDAI inspection readiness, AI usage audit trails
+Edge
+IT Services / ITeS
+CIO / Delivery Head
+Client MSA compliance, per-engagement isolation
+Build + Edge
+Healthcare
+CISO / CTO
+PHI leakage via AI tools, DPDP obligations
+Edge + Workspace
+Enterprise Tech
+Platform / DevEx Lead
+Governing developer AI tools, agentic infrastructure
+Build
+Professional Services
+CIO / Operations
+Sensitive client data exposure in AI workflows
+Edge + Workspace
+
+3.3  Buyer Personas
+CISO
+	•	Primary concern: data exfiltration via AI tools, regulatory audit readiness, incident evidence
+	•	Entry point: Ethana Edge — immediate shadow AI inventory and prompt visibility
+	•	Key metric: time to produce a full AI usage register for a regulatory inspection
+
+CIO / CTO
+	•	Primary concern: ungoverned AI sprawl, developer productivity vs. security, AI cost control
+	•	Entry point: Ethana Build or full bundle
+	•	Key metric: centralized control over model access, token spend, and agent deployment
+
+Engineering / Platform Lead
+	•	Primary concern: building AI applications with production-grade infrastructure
+	•	Entry point: Ethana Build
+	•	Key metric: time to deploy governed AI applications; evaluation and PromptOps maturity
+
+Head of Compliance / DPO
+	•	Primary concern: DPDP, GDPR, RBI, IRDAI, SEBI alignment; evidence of AI controls
+	•	Entry point: Edge governance reports and Workspace audit logs
+	•	Key metric: availability of audit-ready AI usage evidence on demand
+
+
+4. Core Messaging by Product
+4.1  Ethana Edge — Endpoint AI Monitoring & Governance
+Primary message: Know exactly what AI your employees are using, what they are sharing, and be able to prove it.
+
+Current capability (GA): Observability. Edge currently delivers full AI visibility and audit capabilities. Security enforcement and blocking are in development.
+
+Observability proof points (available today):
+	•	Continuous device-level discovery of every AI tool, browser extension, developer assistant, and local model — including unsanctioned tools.
+	•	Browser-level prompt and response monitoring across ChatGPT, Claude, Gemini, and all major consumer AI platforms.
+	•	Developer AI monitoring covering Cursor, GitHub Copilot, Claude Code, Windsurf, Cline, Aider, and VS Code AI extensions.
+	•	Per-user attribution and session-level activity tracking.
+	•	Device-level AI asset inventory including MCP servers running on endpoints.
+	•	Immutable audit logs and compliance reports suitable for regulatory inspection.
+	•	Deploys via endpoint agent and browser extension. No organizational change required to start.
+
+On the roadmap (do not position as current):
+	•	PII masking and sensitive data redaction before prompts leave the browser.
+	•	Source code masking for developer AI tools.
+	•	AI website allowlists and blocklists; browser-level policy enforcement.
+	•	Secret detection and masking.
+
+Relevant regulatory alignment: The observability and audit log capabilities today directly support RBI, IRDAI, SEBI, DPDP, and GDPR audit readiness requirements.
+
+4.2  Ethana Workspace — Governed AI Workspaces & Knowledge Assistants
+Primary message: Give employees a governed place to do AI-assisted work on sensitive internal knowledge — without it ever leaving your network.
+
+Supporting proof points:
+	•	Self-hosted enterprise AI chat with multi-user collaboration, shared workspaces, and department-level knowledge assistants.
+	•	RAG on internal sources: PDFs, SharePoint, Confluence, Notion, Google Drive, internal databases, and custom repositories.
+	•	Document drafting, summarization, knowledge extraction, report generation, and review workflows — all within the governed boundary.
+	•	Role-based access control on knowledge sources. PII auto-masked in storage, unmasked only for authorized roles.
+	•	Every prompt, response, and document export captured in an immutable audit log.
+	•	Custom chat widgets for department-specific copilots and customer- or employee-facing assistants.
+
+Differentiation from consumer AI chat: Workspace is not a wrapper around a public API. It is a self-hosted platform where customer data, prompts, and responses do not leave the organization's infrastructure.
+
+4.3  Ethana Build — Enterprise AI Infrastructure & Control Plane
+Primary message: The infrastructure layer for teams building AI applications and agents — with governance, evaluation, and operational control built in from day one.
+
+Supporting proof points:
+	•	OpenAI-compatible gateway for multi-model access: OpenAI, Anthropic, Gemini, Groq, Cerebras, and self-hosted open-weight models.
+	•	Dynamic, SLA-aware, cost-aware, and reliability-aware routing and fallback.
+	•	PromptOps: centralized prompt repository, versioning, rollback, A/B testing, canary releases, and environment management.
+	•	Evaluation: dataset management, model benchmarking, regression testing, hallucination detection, and production sampling.
+	•	Guardrails: PII detection and masking, prompt injection detection, jailbreak detection, toxicity detection, secret detection, and custom policy enforcement.
+	•	MCP lifecycle management: hosting, versioning, deployment, tool access controls, observability, and composable MCP creation.
+	•	Visual agent builder: drag-and-drop DAG workflow design with agents, APIs, functions, conditions, routers, loops, parallel execution, evaluators, guardrails, and human-in-the-loop steps.
+	•	Per-call cost and token tracking; per-project budgets and RBAC.
+
+
+5. Competitive Handling
+5.1  Competitive Landscape
+Ethana overlaps with several point solution categories. The competitive framing is always: Ethana provides these capabilities in an integrated platform, not as isolated tools requiring separate procurement, integration, and governance models.
+
+	•	AI Gateways (e.g. Portkey, LiteLLM) — covered by Ethana Build, with additional PromptOps, evaluation, and MCP management.
+	•	AI Observability (e.g. Langfuse, Arize) — covered by the shared observability layer across all three products.
+	•	AI Security / Browser DLP (e.g. LayerX, Nightfall) — covered by Ethana Edge, with AI-specific context including model attribution and MCP server inventory.
+	•	Enterprise AI Chat (e.g. Microsoft Copilot, Glean) — covered by Ethana Workspace, with full self-hosting and governance.
+	•	AI Governance Platforms (e.g. Credo AI, AIShield) — Ethana provides operational governance in addition to policy governance.
+	•	Agent Platforms (e.g. LangChain, CrewAI) — covered by Ethana Build's agent builder and MCP platform.
+
+5.2  Objection Handling
+Objection
+Response
+"We already have Zscaler / DLP."
+Traditional DLP is not AI-aware — it has no concept of model selection, MCP servers, or AI interaction context. Ethana Edge today provides AI-specific observability: a full inventory of every AI tool on every device, prompt and response visibility, and per-user attribution that DLP cannot produce. Enforcement and blocking capabilities are on the roadmap.
+"We will just use the gateway our cloud provider offers."
+Cloud-native gateways are single-provider. Ethana Build provides provider-independent multi-model routing, PromptOps, evaluation, and MCP governance across OpenAI, Anthropic, Gemini, and self-hosted models.
+"We are not ready for AI governance yet."
+Shadow AI is already present. Ethana Edge requires no organizational change to begin — deploy the endpoint agent, and you get an immediate inventory of what is already running.
+"We have a small team and limited budget."
+Ethana is licensed per platform, not per seat or per token. A single Edge license at $10,000/year covers the whole organization. No per-user fees.
+"We need everything on-prem / air-gapped."
+Ethana is explicitly designed for on-premises, VPC, and air-gapped deployment. No customer prompts, data, or telemetry are required to leave the customer-controlled environment.
+"We are already building our own internal gateway."
+Ethana Build is available today with PromptOps, evaluation, MCP lifecycle management, and agent orchestration built in. Internal builds rarely replicate these capabilities.
+
+6. Sales Plays
+6.1  Shadow AI Discovery Play
+Target: CISO or Head of IT at enterprises in regulated industries.
+	•	Opening question: Do you have an accurate list of every AI tool your employees are using right now?
+	•	Entry product: Ethana Edge at $10,000/year.
+	•	Demo focus: Live AI inventory from endpoint agent; prompt and response visibility from browser extension.
+	•	Expansion path: Once Edge is deployed, surface the need for governed Workspace to redirect shadow AI usage.
+	•	Proof point: Edge can be deployed with no organizational change. Show the inventory within 30 minutes of install.
+
+6.2  Regulatory Audit Readiness Play
+Target: CISO or Chief Compliance Officer at BFSI, insurance, or healthcare organizations.
+	•	Opening question: If the regulator asked for an AI usage register tomorrow — by user, model, business unit, and data category — how quickly could you produce it?
+	•	Entry product: Ethana Edge.
+	•	Demo focus: Compliance reports, user attribution, audit log export.
+	•	Expansion path: Ethana Workspace for governed AI usage; audit logs from Workspace cover internal AI interactions beyond the browser.
+	•	Regulatory hook: Align messaging to RBI Digital Risk guidance, IRDAI Cybersecurity Guidelines, SEBI, and DPDP obligations.
+
+6.3  AI Infrastructure Play (Build-led)
+Target: Engineering leads, platform teams, or AI teams building internal AI applications.
+	•	Opening question: How are you managing prompt versions, model routing, and evaluations across your AI applications in production?
+	•	Entry product: Ethana Build at $30,000/year.
+	•	Demo focus: PromptOps workflow, multi-model gateway, evaluation pipeline, agent builder.
+	•	Expansion path: Once Build is in place, propose Edge to govern developer AI tool usage; propose Workspace for internal teams consuming AI.
+	•	Competitive angle: Ethana Build replaces a fragmented stack of LiteLLM, Langfuse, a custom eval harness, and an ad hoc MCP setup.
+
+6.4  Full Platform / Bundle Play
+Target: CIO, CTO, or CISO with enterprise-wide AI governance mandate.
+	•	Opening question: Which layer of your AI stack do you have the least visibility into right now — the tools employees use, the AI your teams are building, or both?
+	•	Entry product: Enterprise AI Control Plane Bundle at $45,000/year.
+	•	Demo structure: 10 minutes each on Edge, Workspace, Build; show unified audit dashboard.
+	•	Pricing anchor: Bundle delivers all three platforms for the cost of Build plus one additional product.
+	•	Deployment note: Entire platform available on-premises, in VPC, or air-gapped. No customer data leaves the organization.
+
+
+7. Pricing Reference
+7.1  Pricing Summary
+Product
+Annual License
+Included Nodes
+Extra Node/year
+Ethana Edge
+$10,000
+1
+$2,000
+Ethana Workspace
+$10,000
+1
+$2,000
+Ethana Build
+$30,000
+1
+$5,000
+Enterprise AI Control Plane Bundle
+$45,000
+1 of each
+As above
+
+7.2  Licensing Model
+Ethana pricing is based on platform value and deployment scope, not users, seats, tokens, or API calls. This is a meaningful differentiator versus per-seat or consumption-based AI tools.
+
+	•	Each product includes one production node.
+	•	Additional nodes are available at the per-node rates above.
+	•	A node represents an independently deployed, managed, or governed instance — for example, an additional region, business unit, subsidiary, or air-gapped environment.
+	•	Licensing is consistent across SaaS, private cloud, VPC, and on-premises deployment models.
+
+7.3  Deployment Options
+	•	SaaS
+	•	Private Cloud
+	•	Customer VPC
+	•	On-Premises
+	•	Air-Gapped Environments
+
+All deployment models include software updates, security updates, feature releases, documentation access, and standard support. Premium support and professional services are available separately.
+
+8. Outbound Email Plays
+The following email frameworks have been validated for outbound prospecting. Each is built around a specific industry context and regulatory hook. Personalize the opening questions to the prospect's organization before sending.
+
+8.1  BFSI — Regulatory Inspection Readiness
+Subject line: Before your next regulatory inspection
+Hook: Opens with four diagnostic questions about AI tool inventory, developer tool audit trails, and the ability to produce an AI usage register for regulators. Positions Ethana Edge as the visibility layer that answers questions most CISOs currently cannot.
+CTA: 25-minute call to walk through what we are seeing across Indian BFSI, with a live demo.
+
+8.2  Insurance — IRDAI Inspection
+Subject line: Before your next IRDAI inspection
+Hook: Tailored to insurance-specific context: visibility into which AI tools handle policy documents, claims data, and underwriting materials; audit trail readiness for IRDAI. References IRDAI Information & Cybersecurity Guidelines and IRDAI Master Circular on Operational Resilience.
+CTA: 25-minute call focused on Indian insurance context.
+
+8.3  IT Services / ITeS — Client MSA Compliance
+Subject line: Your developers, Cursor, and your client's MSA
+Hook: Focuses on the conflict between developer AI tool adoption (Cursor, Copilot, Claude Code) and client data confidentiality clauses in MSAs. Highlights per-engagement isolation, AI audit logs scoped to client engagements, and the ability to produce an audit trail for any client's CISO.
+CTA: 25-minute call with live demo of per-client scoping on a Cursor session.
+
+8.4  Email Principles
+	•	Open with honest diagnostic questions specific to the prospect's industry — not a product description.
+	•	Name the real tools employees are using (ChatGPT, Cursor, Copilot, Claude Code) rather than generic references to 'AI tools'.
+	•	State the deployment model early — deployed inside your DC, VPC, or air-gapped. This immediately differentiates from SaaS-only vendors.
+	•	One ask only: a 25-minute conversation. Not a demo, not a trial, not a proposal.
+	•	Close with three specific time slots and a direct instruction to reply with a preference.
+	•	Footer credentials: ISO 27001 certified, NVIDIA Inception Program, deployed with regulated customers today.
+
+9. Writing & Messaging Guidelines
+These rules apply to all marketing content, sales emails, website copy, and presentation materials.
+
+	•	Prioritize clarity over marketing language. Describe what the platform does and what outcomes it produces.
+	•	Do not describe Ethana as only a chatbot platform, only a RAG tool, only an LLM gateway, only a compliance tool, or only an agent builder. Use the relevant product area and acknowledge the broader platform where appropriate.
+	•	Avoid exaggerated claims. Use specific, verifiable capabilities and real product features.
+	•	Avoid excessive use of buzzwords. Prefer precise technical language familiar to CISOs, CIOs, engineering leaders, and platform teams.
+	•	Do not repeat a tagline or slogan in every sentence. One positioning statement per section is sufficient.
+	•	When referencing regulatory frameworks, be specific: name the regulation, the relevant guideline, and what Ethana does that supports compliance.
+	•	Use enterprise software terminology: audit logs, RBAC, observability, guardrails, PromptOps, air-gapped deployment — these are correct and appropriate.
+	•	Do not use language that implies Ethana monitors employees for performance or behavior. The framing is always AI governance, data protection, and audit readiness.
+
+For questions about this playbook, contact sales@ethana.ai
+
+ethana.ai  ·  ISO 27001 Certified  ·  NVIDIA Inception Program
