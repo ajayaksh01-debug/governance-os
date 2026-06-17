@@ -1,0 +1,32 @@
+# Regulatory Watch Agent Runtime Configuration
+# Version: 0.1
+
+schemas:
+  regulatory_mapping: "workflows/schemas/regulatory_mapping_output.json"
+  control_mapping: "workflows/schemas/control_mapping_output.json"
+
+baselines:
+  regulatory_mapping: "evaluations/baselines/regulatory-mapping/structure.json"
+  control_mapping: "evaluations/baselines/governance-control-mapping/structure.json"
+
+cpm_path: "knowledge/ethana/canonical-product-model.md"
+
+directories:
+  runs: "agents/regulatory-watch-agent/runtime/runs"
+  packages: "agents/regulatory-watch-agent/runtime/packages"
+  logs: "agents/regulatory-watch-agent/runtime/logs"
+
+thresholds:
+  regulatory_mapping: 70
+  control_mapping: 85
+
+mock_fixtures:
+  eu-ai-act-high-risk-banking:
+    gold_standard: "evaluations/test-cases/gold-standards/eu-ai-act-high-risk-banking-gold-standard.md"
+    subject: "evaluations/test-cases/regulatory-subjects/eu-ai-act-high-risk-banking.md"
+  india-dpdp-customer-support-ai:
+    gold_standard: "evaluations/test-cases/gold-standards/india-dpdp-customer-support-ai-gold-standard.md"
+    subject: "evaluations/test-cases/regulatory-subjects/india-dpdp-customer-support-ai.md"
+  uk-insurance-claims-model:
+    gold_standard: "evaluations/test-cases/gold-standards/uk-insurance-claims-model-gold-standard.md"
+    subject: "evaluations/test-cases/regulatory-subjects/uk-insurance-claims-model.md"
