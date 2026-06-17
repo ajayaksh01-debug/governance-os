@@ -124,12 +124,29 @@ Assign a TFS for each Production feature against the specific technical requirem
 - Do not round up to avoid a lower band. A score of 67 is Partial, not Viable. A score of 72 is Viable, not Ready.
 - A Production feature that cannot satisfy the requirement in this customer's deployment model (e.g., on-prem throughput ceiling exceeded) should score Thin or Not Viable for that specific requirement — not Viable.
 
-### 3.3 Handling Not Viable Production Features
+**BFSI regulatory evidence calibration:** When the requirement is a tamper-proof record, regulatory evidence control, or audit trail for examiner review, the Ready band (TFS 90–100) requires that the core mechanism providing the regulatory protection be confirmed in canonical-product-model.md — not just that the feature exists at Production status. Apply these calibration adjustments:
+- Application-layer insert-only confirmed; DB-layer enforcement unconfirmed; customer's compliance framework has not stated a DB-layer requirement → upper Viable (78–85). The confirmed control is strong; one material technical clarification is outstanding.
+- Same scenario, but the customer's internal audit policy or regulator explicitly requires DB-layer or hardware WORM enforcement → mid-Viable (65–74). The confirmed implementation may not satisfy the stated compliance requirement; engineering confirmation is a prerequisite, not an option.
+- Same scenario, but the customer asks about using the feature as the sole tamper-evidence control in a regulatory examination submission → apply the more conservative band and flag for escalation, regardless of whether DB-layer enforcement is explicitly required. A sole tamper-evidence control must be documented to the level the examiner will ask about.
 
-When a Production feature scores Not Viable (TFS 0–24) against a specific requirement:
+### 3.3 Handling Low-Scoring Production Features
+
+**Not Viable (TFS 0–24):**
+When a Production feature scores Not Viable against a specific requirement:
 1. Do not include it as a primary coverage item in Section 9. If it appears at all, it must carry an explicit caveat: "This feature does NOT address [the formal/statistical/structured-data aspect] of this requirement."
 2. Route the unaddressed portion of the requirement to Section 4 (Technical Constraints) and Section 6 (Prohibited) to prevent false confidence.
 3. Do not use the feature's existence as justification for the requirement being "partially met" unless TFS ≥ 25.
+
+**Thin (TFS 25–49) when the feature represents the central risk of the evaluation:**
+A Thin feature that is the lowest-scoring item in the evaluation — particularly when it drives the POC characterisation to "POC-Ready with Conditions" or lower — must receive a standalone Section 9 entry, even though it is not a primary coverage item. The Section 9 entry for a Thin feature must document:
+1. What the feature can do in the customer's context — the confirmed production capability
+2. What remains unconfirmed — the specific gap that produces the Thin score
+3. What the customer must do before relying on this feature — the required engineering confirmation, prerequisite validation, or POC test
+4. A mandatory caveat in the same inline format as other Section 9 entries
+
+Do not omit a central-risk Thin feature from Section 9 because it "isn't proposal-ready." The purpose of including it is precisely to ensure the risk appears in proposal language — the one section that solution architects extract for technical addenda and customer communications. A risk documented only in Sections 1 and 4 but not Section 9 is invisible to the readers who most need it.
+
+**When this applies:** Any Thin feature in a BFSI context; any Thin feature that is the sole Thin or Not Viable item and thus drives the evaluation's overall characterisation; any Thin feature where the gap requires customer action before POC commitment (rather than just a known trade-off).
 
 ---
 

@@ -126,6 +126,10 @@ output_mode: Technical Evaluation
 
 5. **SCIM provisioning is In Build:** Azure AD or Okta SSO/OIDC integration is Production; automated SCIM user provisioning is not yet available. User lifecycle management during the POC and initial deployment must be manual via the Ethana admin console.
 
+6. **Retention applies uniformly — differential retention by call type is not supported:** The retention period is configured globally per tenant, not per call category, AI system, or use case. A bank with multiple AI deployments at different regulatory retention obligations (e.g., 5 years for credit AI decisions, 7 years for AML-related AI activity) cannot enforce different retention periods within a single Ethana tenant in the standard configuration. If differential retention is required, a downstream archival pipeline with selective filtering against the event record's call metadata would be needed.
+
+7. **Splunk integration requires customer-built data model and dashboards:** Ethana does not provide a pre-built Splunk app or native Splunk data model. The bank's Splunk team must build field extractions and dashboards against the Ethana JSON event schema before the SIEM integration is usable for reporting or examiner demonstrations. For a BFSI RBI evidence demonstration, plan 2–3 days of Splunk team effort to build a baseline dashboard mapping Audit Log fields to the examiner's evidence checklist.
+
 ---
 
 ## 5. POC Feature Set
@@ -141,7 +145,7 @@ output_mode: Technical Evaluation
 | SCIM automated user provisioning | In Build | Cannot be demonstrated; cannot appear in POC scope; cannot appear in technical evaluation as available |
 | SOC 2 Type II certification | In Build | Cannot be claimed as a current certification; must be disclosed as In Build if raised by the evaluator |
 | ISO 27001 certification | In Build | Cannot be claimed as a current certification; must be disclosed as In Build if raised by the evaluator |
-| Ethana Edge (all capabilities) | In Build | Cannot be demonstrated; do not reference in a technical evaluation of Ethana Build capabilities |
+| Ethana Edge (all capabilities) | In Build | Cannot be demonstrated; cannot be described as currently available; do not reference in any technical evaluation, RFI response, or POC scope as an available capability |
 | Ethana Workspace (all features) | Aspirational | Must not be described or referenced as available or demonstrable in any context |
 | Visual Agent Builder | Aspirational | Must not be described or referenced as available or demonstrable in any context |
 
@@ -190,6 +194,12 @@ output_mode: Technical Evaluation
 ### Audit Log — Retention Policy
 
 "Retention period is configurable per tenant at onboarding. The bank sets the retention period to align with its regulatory record-keeping obligations (RBI guidance for credit AI-related records is typically five to seven years). Retention is applied uniformly across all event types — selective retention by call type within the same tenant is not supported in the standard configuration."
+
+### Audit Log — On-premises Write Throughput (Q4 — Thin: TFS 42)
+
+"The Ethana Audit Log on-premises deployment uses a single-node architecture. At a sustained average of 50,000 LLM calls per day — approximately 0.58 calls per second — average write volume to the event store is within the plausible range for a single-node deployment. However, the Ethana canonical product model does not confirm a throughput ceiling for on-premises deployments. Write performance at concentrated burst-hour volumes — for example, 500–1,000 simultaneous credit analysis calls during the morning underwriting window — cannot be stated as confirmed based on approved product documentation.
+
+**Mandatory caveat — do not commit to on-premises deployment for this volume without engineering confirmation:** The on-premises single-node write throughput ceiling is not quantified in approved Ethana product documentation. Before finalising the POC architecture or any production deployment commitment for on-premises at 50,000 calls/day, the bank should: (1) share the intraday call distribution profile with Ethana engineering; (2) request explicit confirmation that the on-prem single-node architecture supports the peak burst-hour write rate; (3) include a throughput validation test in the POC scope before committing to on-prem as the production deployment model. If the bank's compliance position requires a confirmed write-availability guarantee for the Audit Log as a regulatory evidence store, this engineering confirmation is a prerequisite to any formal deployment commitment, not a post-POC step."
 
 ---
 
