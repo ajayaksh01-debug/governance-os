@@ -57,6 +57,10 @@ CAPABILITY_ALIASES = {
     "policy engine":          "governance policy engine",
 }
 
+# Single-word capabilities allowlist and denylist
+SINGLE_WORD_ALLOWLIST = {"promptops", "finops", "evaluation", "guardrails", "mcp", "discovery", "nhi"}
+SINGLE_WORD_DENYLIST = {"evaluation", "discovery", "guardrails"}
+
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
@@ -220,23 +224,29 @@ def lint_file(target_path: Path, capabilities: dict) -> list:
         if canonical_key in capabilities and alias_key not in capabilities:
             capabilities[alias_key] = capabilities[canonical_key]
 
-    # Precompile word-boundary patterns for multi-word keys only.
-    # Single-word keys (no space, no hyphen) are skipped: they represent common
-    # English words extracted as base names from compound capability names
-    # (e.g., "Evaluation" from "Evaluation — Dataset management", "PromptOps"
-    # from "PromptOps — Canary releases"). Checking single-word keys generates
-    # pervasive false positives across general English text. Known
-    # single-word critical capabilities are covered by the explicit hard rules.
-    #
-    # Word-boundary lookaround prevents matching inside longer words or file
-    # paths (e.g., "evaluations/baselines/..." will not match "evaluation").
+    # Precompile word-boundary patterns.
+    # Single-word keys (no space, no hyphen) are only matched if they are in the allowlist.
+    # If they are in the denylist, they require Ethana-specific context to prevent false positives.
     cap_patterns: dict = {}
     for cap_key in capabilities:
         if " " not in cap_key and "-" not in cap_key:
-            continue
-        cap_patterns[cap_key] = re.compile(
-            r"(?<![a-z0-9/])" + re.escape(cap_key) + r"(?![a-z0-9/])"
-        )
+            if cap_key not in SINGLE_WORD_ALLOWLIST:
+                continue
+            if cap_key in SINGLE_WORD_DENYLIST:
+                cap_patterns[cap_key] = re.compile(
+                    r"(?<![a-z0-9/])(ethana\s+" + re.escape(cap_key) +
+                    r"|governed\s+" + re.escape(cap_key) +
+                    r"|" + re.escape(cap_key) + r"\s+(connector|agent|engine|gate|tool|capability|platform|scanners|feature|systems?))(?![a-z0-9/])",
+                    re.IGNORECASE
+                )
+            else:
+                cap_patterns[cap_key] = re.compile(
+                    r"(?<![a-z0-9/])" + re.escape(cap_key) + r"(?![a-z0-9/])"
+                )
+        else:
+            cap_patterns[cap_key] = re.compile(
+                r"(?<![a-z0-9/])" + re.escape(cap_key) + r"(?![a-z0-9/])"
+            )
 
     # -----------------------------------------------------------------------
     # Line-by-line linting

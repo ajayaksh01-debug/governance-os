@@ -263,11 +263,49 @@ class Orchestrator:
         # Execute Gate 2: Quality Score Check
         self._evaluate_gate_2(state_mgr, logger, s1_json, inputs)
 
+    def _evaluate_skill_1_firewall(self, state_mgr: StateManager, logger: AuditLogger, md_content: str) -> bool:
+        """Executes Claims Firewall check on Skill 1 output."""
+        trace_id = state_mgr.traceability_id
+        
+        # Write temp md file
+        temp_md_path = self.runs_dir / f"{trace_id}_s1_firewall_temp.md"
+        temp_md_path.write_text(md_content, encoding="utf-8")
+        
+        cpm_path = repo_root / "knowledge" / "ethana" / "canonical-product-model.md"
+        firewall_errors = []
+        try:
+            capabilities = claims_linter.parse_canonical_model(cpm_path)
+            firewall_violations = claims_linter.lint_file(temp_md_path, capabilities)
+            if firewall_violations:
+                for ln, line, msg in firewall_violations:
+                    firewall_errors.append(f"Line {ln}: {msg}")
+        except Exception as e:
+            logger.log("GATE_1_FIREWALL", "ERROR", f"Could not run Claims Firewall linter: {e}")
+        finally:
+            if temp_md_path.exists():
+                temp_md_path.unlink()
+                
+        if firewall_errors:
+            state_mgr.update_intermediate_data("claims_firewall_status_s1", "BREACH")
+            state_mgr.transition_to("HALTED_FIREWALL_BREACH", f"Claims Firewall breaches detected in Skill 1 output: {firewall_errors}")
+            logger.log("GATE_1_FIREWALL", "BREACH", f"Claims Firewall breach detected in Skill 1 output: {firewall_errors}. Pipeline halted.")
+            return False
+        else:
+            state_mgr.update_intermediate_data("claims_firewall_status_s1", "PASS")
+            logger.log("GATE_1_FIREWALL", "SUCCESS", "Claims Firewall check passed on Skill 1 output.")
+            return True
+
     def _evaluate_gate_1(self, state_mgr: StateManager, logger: AuditLogger, s1_json: dict, inputs: dict) -> bool:
         """Runs Gate 1 schema validation with single auto-retry logic."""
         trace_id = state_mgr.traceability_id
         state_mgr.transition_to("SKILL_1_COMPLETE", "Skill 1 complete. Initiating Gate 1 (Schema Validation).")
         
+        # Run Claims Firewall check (new gate) against Skill 1 output
+        s1_md = state_mgr.get_state().get("intermediate_data", {}).get("regulatory_mapping_output_md", "")
+        passed_firewall = self._evaluate_skill_1_firewall(state_mgr, logger, s1_md)
+        if not passed_firewall:
+            return False
+            
         # First attempt payload
         payload = dict(s1_json)
         if inputs.get("simulate_gate_1_fail"):
@@ -538,7 +576,8 @@ class Orchestrator:
             
             # 2. Re-validate Gate 3b (Firewall)
             temp_md_path = self.runs_dir / f"{traceability_id}_s2_re_temp.md"
-            temp_md_path.write_text(md_content, encoding="utf-8")
+            merged_content = md_content + "\n\n" + (notes or "")
+            temp_md_path.write_text(merged_content, encoding="utf-8")
             cpm_path = repo_root / "knowledge" / "ethana" / "canonical-product-model.md"
             firewall_errors = []
             try:
