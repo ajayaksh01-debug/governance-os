@@ -1,0 +1,256 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Ethana Capability Validation Output",
+  "description": "Machine-readable output produced by the ethana-capability-validation skill.",
+  "type": "OBJECT",
+  "required": [
+    "capability_name",
+    "validated_status",
+    "ecs",
+    "ecs_band",
+    "ecs_path",
+    "allowed_claims",
+    "prohibited_claims",
+    "contradictions_count",
+    "sources_checked",
+    "escalation_required",
+    "hard_disqualifiers_triggered",
+    "phase_9_gate_completed",
+    "validation_date"
+  ],
+  "properties": {
+    "capability_name": {
+      "type": "STRING",
+      "description": "Exact name of the capability as it appears in canonical-product-model.md"
+    },
+    "validated_status": {
+      "type": "STRING",
+      "enum": ["Production", "In Build", "Aspirational", "Unresolved"],
+      "description": "Status adjudicated from canonical-product-model.md. Unresolved indicates canonical model has no entry and escalation is required."
+    },
+    "canonical_entry_verbatim": {
+      "type": "STRING",
+      "description": "Verbatim quote of the canonical-product-model.md entry for this capability. Required when validated_status is Production, In Build, or Aspirational."
+    },
+    "mandatory_caveats": {
+      "type": "ARRAY",
+      "description": "Mandatory caveats from the canonical model entry that must accompany all customer-facing claims about this capability.",
+      "items": {
+        "type": "STRING"
+      }
+    },
+    "scope_boundaries": {
+      "type": "OBJECT",
+      "description": "Confirmed scope (covers) and exclusions (does not cover) as derived from canonical-product-model.md.",
+      "properties": {
+        "covers": {
+          "type": "ARRAY",
+          "items": { "type": "STRING" }
+        },
+        "does_not_cover": {
+          "type": "ARRAY",
+          "items": { "type": "STRING" }
+        }
+      }
+    },
+    "ecs": {
+      "type": "INTEGER",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Evidence Confidence Score. 0 when validated_status is In Build or Aspirational and a Production claim is being evaluated (Path B/C cap applies)."
+    },
+    "ecs_band": {
+      "type": "STRING",
+      "enum": ["Authoritative", "Corroborated", "Canonical-only", "Contested", "Insufficient"],
+      "description": "ECS band derived from the score."
+    },
+    "ecs_path": {
+      "type": "STRING",
+      "enum": ["A", "B", "C", "D", "E", "F"],
+      "description": "ECS computation path selected based on claimed status vs. canonical status."
+    },
+    "ecs_arithmetic": {
+      "type": "STRING",
+      "description": "Human-readable ECS arithmetic showing base score plus all adjustments applied."
+    },
+    "allowed_claims": {
+      "type": "ARRAY",
+      "description": "Claims approved for use in downstream outputs. Each entry has a specific CPL. Aspirational capabilities must produce an empty array.",
+      "items": {
+        "type": "OBJECT",
+        "required": ["claim_text", "cpl", "permitted_contexts", "required_caveat", "evidence_basis"],
+        "properties": {
+          "claim_text": {
+            "type": "STRING",
+            "description": "Exact, quotable claim text ready for use in a downstream output without further rewriting."
+          },
+          "cpl": {
+            "type": "STRING",
+            "enum": ["CPL-1", "CPL-2", "CPL-3", "CPL-4"],
+            "description": "CPL-1 = Unrestricted. CPL-2 = Advisory-restricted. CPL-3 = Conversation-only. CPL-4 = Internal-only."
+          },
+          "permitted_contexts": {
+            "type": "ARRAY",
+            "description": "Contexts in which this claim may be used without modification.",
+            "items": {
+              "type": "STRING",
+              "enum": [
+                "All contexts",
+                "Formal Proposal",
+                "RFP Response",
+                "Discovery Conversation",
+                "Internal Briefing",
+                "Engineering Documentation",
+                "Marketing"
+              ]
+            }
+          },
+          "required_caveat": {
+            "type": "STRING",
+            "description": "Caveat text that must accompany this claim before formal use."
+          },
+          "evidence_basis": {
+            "type": "STRING",
+            "description": "Source and ECS basis for this claim."
+          }
+        }
+      }
+    },
+    "prohibited_claims": {
+      "type": "ARRAY",
+      "description": "Claims that must not appear in any downstream output at any CPL level. All entries are CPL-5.",
+      "items": {
+        "type": "OBJECT",
+        "required": ["claim_text", "cpl", "prohibition_reason"],
+        "properties": {
+          "claim_text": {
+            "type": "STRING",
+            "description": "The specific claim or claim pattern that is prohibited."
+          },
+          "cpl": {
+            "type": "STRING",
+            "enum": ["CPL-5"]
+          },
+          "prohibition_reason": {
+            "type": "STRING",
+            "description": "Reason from the approved prohibition list."
+          },
+          "risk_if_used": {
+            "type": "STRING",
+            "description": "Specific business or regulatory risk if this claim is used in a customer-facing context."
+          },
+          "source_of_claim": {
+            "type": "STRING",
+            "description": "Where this claim was observed."
+          }
+        }
+      }
+    },
+    "contradictions_count": {
+      "type": "INTEGER",
+      "minimum": 0,
+      "description": "Number of source contradictions documented."
+    },
+    "sources_checked": {
+      "type": "ARRAY",
+      "description": "All sources consulted during validation.",
+      "minItems": 1,
+      "items": {
+        "type": "OBJECT",
+        "required": ["source_name", "authority_level", "claim_made", "consistent_with_canonical"],
+        "properties": {
+          "source_name": {
+            "type": "STRING",
+            "description": "Exact file name or document reference."
+          },
+          "authority_level": {
+            "type": "STRING",
+            "enum": ["Primary", "Secondary", "Reference Only"],
+            "description": "Primary/Secondary/Reference Only"
+          },
+          "claim_made": {
+            "type": "STRING",
+            "description": "The specific claim or entry from this source."
+          },
+          "consistent_with_canonical": {
+            "type": "STRING",
+            "enum": ["Yes", "Silent", "Contradicts", "Expands"]
+          }
+        }
+      }
+    },
+    "escalation_required": {
+      "type": "BOOLEAN",
+      "description": "True when ECS < 45 or status is Unresolved."
+    },
+    "escalation_details": {
+      "type": "OBJECT",
+      "description": "Required when escalation_required is true.",
+      "properties": {
+        "recipient": {
+          "type": "STRING",
+          "description": "Named escalation recipient."
+        },
+        "specific_question": {
+          "type": "STRING",
+          "description": "The exact question requiring resolution."
+        },
+        "interim_position": {
+          "type": "STRING",
+          "description": "What may and may not be said while escalation is pending."
+        },
+        "downstream_blocks": {
+          "type": "ARRAY",
+          "items": { "type": "STRING" }
+        }
+      },
+      "required": ["recipient", "specific_question", "interim_position", "downstream_blocks"]
+    },
+    "hard_disqualifiers_triggered": {
+      "type": "ARRAY",
+      "description": "List of hard disqualifiers triggered. Empty array = no disqualifiers.",
+      "items": {
+        "type": "STRING",
+        "enum": ["HQ1", "HQ2", "HQ3", "HQ4", "HQ5", "HQ6", "HQ7"]
+      }
+    },
+    "phase_9_gate_completed": {
+      "type": "BOOLEAN",
+      "description": "Confirms all 7 Phase 9 gate steps were completed."
+    },
+    "phase_9_gate_steps": {
+      "type": "OBJECT",
+      "description": "Individual Phase 9 gate step confirmations.",
+      "properties": {
+        "step_1_ecs_arithmetic": { "type": "BOOLEAN" },
+        "step_2_cpl_completeness": { "type": "boolean" },
+        "step_3_source_traceability": { "type": "boolean" },
+        "step_4_prohibited_source_check": { "type": "boolean" },
+        "step_5_contradiction_completeness": { "type": "boolean" },
+        "step_6_scope_expansion_check": { "type": "boolean" },
+        "step_7_audit_trail": { "type": "boolean" }
+      }
+    },
+    "validation_date": {
+      "type": "STRING",
+      "description": "ISO 8601 date on which this validation was performed."
+    },
+    "claim_context": {
+      "type": "STRING",
+      "enum": [
+        "Formal Proposal",
+        "RFP Response",
+        "Discovery Conversation",
+        "Internal Briefing",
+        "Engineering Documentation",
+        "Marketing",
+        "POC Scoping"
+      ],
+      "description": "The commercial context."
+    },
+    "requesting_team": {
+      "type": "STRING",
+      "description": "Team that requested the validation."
+    }
+  }
+}

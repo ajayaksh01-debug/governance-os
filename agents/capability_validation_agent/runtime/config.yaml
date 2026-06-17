@@ -1,0 +1,18 @@
+# Capability Validation Agent Runtime Configuration
+# Version: 0.1
+
+schemas:
+  capability_validation: "agents/capability_validation_agent/runtime/contracts/capability_validation_output.json"
+
+baselines:
+  capability_validation: "evaluations/baselines/ethana-capability-validation-baseline.md"
+
+cpm_path: "knowledge/ethana/canonical-product-model.md"
+
+directories:
+  runs: "agents/capability_validation_agent/runtime/runs"
+  packages: "agents/capability_validation_agent/runtime/packages"
+  logs: "agents/capability_validation_agent/runtime/logs"
+
+thresholds:
+  capability_validation: 90
