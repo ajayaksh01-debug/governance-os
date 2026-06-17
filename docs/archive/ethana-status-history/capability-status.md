@@ -1,3 +1,14 @@
+# DEPRECATED
+
+This file is retained for historical reference only.
+
+Superseded by:
+knowledge/ethana/canonical-product-model.md
+
+Do not use for capability status validation, proposal generation, solution mapping, or agent decisions.
+
+---
+
 # Ethana Platform — Capability Status Matrix
 
 This is the single most important artifact in this knowledge base for a procurement conversation. It states, for every platform capability, what is in production today and what is not. It does not overstate.

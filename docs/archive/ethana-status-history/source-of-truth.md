@@ -1,3 +1,14 @@
+# DEPRECATED
+
+This file is retained for historical reference only.
+
+Superseded by:
+knowledge/ethana/canonical-product-model.md
+
+Do not use for capability status validation, proposal generation, solution mapping, or agent decisions.
+
+---
+
 # Ethana Product & Services Source of Truth
 
 This document serves as the single, authoritative product truth layer for the Ethana platform and Cursory Services. It resolves all contradictions between product engineering status docs (`capability-status.md`), system boundaries (`boundaries.md`), and commercial documents—specifically auditing the **Ethana Marketing Playbook (June 2026)** against verified engineering realities.

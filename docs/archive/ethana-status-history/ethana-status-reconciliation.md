@@ -1,3 +1,14 @@
+# DEPRECATED
+
+This file is retained for historical reference only.
+
+Superseded by:
+knowledge/ethana/canonical-product-model.md
+
+Do not use for capability status validation, proposal generation, solution mapping, or agent decisions.
+
+---
+
 # Ethana Capability Status Reconciliation
 
 This document reconciles the technical capability statuses between the engineering status file (`capability-status.md`), the newly created single authoritative product truth layer (`source-of-truth.md`), the latest **Marketing Playbook (June 2026)**, and **direct user observation** (confirming that Discovery and Ethana Workspace are fully working).
