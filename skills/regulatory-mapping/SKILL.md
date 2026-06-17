@@ -171,6 +171,9 @@ A 200–250 word summary of the entire mapping, written for a board or C-suite a
 **Depth calibration:**
 Analysis depth should be proportionate to the subject's risk profile and the number of jurisdictions. A high-risk BFSI use case operating across three jurisdictions warrants a full 9-section analysis. A minimal-risk internal tool in a single jurisdiction may produce a condensed assessment noting limited regulatory engagement.
 
+**Ethana capability references:**
+When Section 6 (Control Requirements) or Section 8 (BFSI Considerations) references an Ethana capability to illustrate how a control requirement maps to the platform, the capability status must be sourced from `knowledge/ethana/canonical-product-model.md`. This skill does not validate Ethana capability claims — that is the function of `skills/ethana-capability-validation/`. If a capability's status is uncertain, reference the capability by name and note "status to be confirmed by Capability Validation" rather than asserting a status.
+
 ---
 
 ## Knowledge Dependencies
@@ -201,14 +204,14 @@ This skill draws on the following knowledge base documents:
 - `knowledge/bfsi/gcc-ai-governance-patterns.md`
 
 **Ethana:**
-- `knowledge/ethana/capability-status.md`
-- `knowledge/ethana/framework-crosswalk.md`
+- `knowledge/ethana/canonical-product-model.md` — primary authority for all Ethana capability status references in Section 6 or Section 8. When this skill references an Ethana capability to illustrate a control mapping, the capability status must be sourced from this file. No other Ethana knowledge file may override it.
+- `knowledge/ethana/framework-crosswalk.md` — framework-to-capability mapping reference. Status flags in this file (`[P]`, `[IB]`, `[RM]`) should be cross-checked against `canonical-product-model.md` before inclusion in any output section. This file is useful for identifying which Ethana capabilities map to which framework controls, but it is not an authority for capability status.
 
 ---
 
 ## Related Skills
 
 - `skills/ai-incident-analysis/` — for incidents requiring full governance root cause analysis beyond regulatory mapping
-- `skills/governance-control-mapping/` — for translating regulatory control requirements into specific control implementations
+- `skills/governance-control-mapping/` — for translating regulatory control requirements into specific control implementations (planned)
 - `skills/ethana-solution-mapping/` — for mapping regulatory control requirements to Ethana platform capabilities
-- `skills/iso-42001-gap-assessment/` — for detailed ISO 42001 gap analysis following framework identification
+- `skills/iso-42001-gap-assessment/` — for detailed ISO 42001 gap analysis following framework identification (planned)
