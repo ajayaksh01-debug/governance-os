@@ -1,0 +1,45 @@
+{
+  "skill_name": "governance-review",
+  "pass_threshold": 85,
+  "required_headers": [
+    "## 1. Executive Governance Summary",
+    "## 2. Regulatory Scope and Framework Matrix",
+    "## 3. Control Coverage Assessment",
+    "## 4. Governance Gap Register",
+    "## 5. Governance Risk Register",
+    "## 6. Framework Compliance Scores",
+    "## 7. Governance TG Gate Table",
+    "## 8. Capability Governance Alignment",
+    "## 9. Required Remediation Actions",
+    "## 10. Governance Release Decision"
+  ],
+  "required_tables": [
+    {
+      "preceding_header": "## 2. Regulatory Scope and Framework Matrix",
+      "required_columns": ["Entry", "Type", "Jurisdiction", "Mandatory", "Status"]
+    },
+    {
+      "preceding_header": "## 3. Control Coverage Assessment",
+      "required_columns": ["Domain", "Mandatory Controls", "Implemented", "Partially Implemented", "Domain CCR"]
+    },
+    {
+      "preceding_header": "## 4. Governance Gap Register",
+      "required_columns": ["Gap ID", "Description", "Source", "Severity", "Domain", "Remediation Category"]
+    },
+    {
+      "preceding_header": "## 7. Governance TG Gate Table",
+      "required_columns": ["Gate", "Step", "Status"]
+    }
+  ],
+  "required_section_10_fields": [
+    "CCR denominator",
+    "CCR numerator",
+    "Control Coverage Rate (CCR)",
+    "Final GAS",
+    "Critical Governance Gaps (CGC)",
+    "Major Governance Findings (MGF)",
+    "governance_gate_passed",
+    "Governance Readiness"
+  ],
+  "arithmetic_identity": "round(ccr_numerator / ccr_denominator * 100, 1) == ccr"
+}

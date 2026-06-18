@@ -30,6 +30,11 @@ def get_agent_definitions(repo_root):
             "required_skills": ["regulatory-mapping", "governance-control-mapping", "ethana-solution-mapping", "ethana-feature-mapping", "ethana-proposal-review"],
             "required_workflows": ["workflows/proposal-development-workflow.md"],
             "target_level": 4
+        },
+        "Governance Review Agent": {
+            "required_skills": ["governance-review"],
+            "required_workflows": [],  # Terminal synthesis skill — no standalone workflow file
+            "target_level": 4
         }
     }
 
