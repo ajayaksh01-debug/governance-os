@@ -1,0 +1,215 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GovernanceReviewInput",
+  "description": "Input payload for the Governance Review skill. Requires the complete outputs of Regulatory Mapping, Governance Control Mapping, and ISO 42001 Gap Assessment. Capability Validation is strongly recommended. No draft document or commercial skill output is required. This schema uses additionalProperties: true on upstream output objects to permit full upstream payloads to pass without rejection — only the fields Governance Review directly consumes are enumerated in required arrays.",
+  "type": "object",
+  "required": [
+    "regulatory_mapping_output",
+    "control_mapping_output",
+    "iso_42001_output"
+  ],
+  "properties": {
+    "regulatory_mapping_output": {
+      "type": "object",
+      "description": "Full output from skills/regulatory-mapping/. applicable_regulations and control_requirements are the primary references for GTG-1 and the CCR denominator. control_requirements items with mandatory = true form the denominator; items with mandatory = false are excluded from CCR. Note: regulatory_mapping_output.json uses uppercase type strings (known defect, PR-003 class); field names are correct.",
+      "required": [
+        "applicable_regulations",
+        "applicable_frameworks",
+        "control_requirements"
+      ],
+      "properties": {
+        "applicable_regulations": {
+          "type": "array",
+          "description": "Regulatory instruments applicable to this client (e.g., EU AI Act, UK FCA Model Risk Guidance). Each item has regulation_name, jurisdiction, trigger, and status fields. Status = Confirmed triggers mandatory framework check."
+        },
+        "applicable_frameworks": {
+          "type": "array",
+          "description": "Governance frameworks applicable to this client (e.g., ISO 42001, NIST AI RMF, OWASP LLM Top 10). Each item has framework_name and relevant_provisions. Distinct from applicable_regulations — both must appear in Section 6."
+        },
+        "regulatory_obligations": {
+          "type": "array",
+          "description": "Non-required at this level but expected to be present in a complete upstream output."
+        },
+        "control_requirements": {
+          "type": "array",
+          "description": "Required controls derived from regulatory obligations. Each item must have control_name, description, source, control_type, and mandatory (boolean). Items where mandatory = true form the CCR denominator. Items where mandatory = false are excluded from CCR."
+        }
+      },
+      "additionalProperties": true
+    },
+    "control_mapping_output": {
+      "type": "object",
+      "description": "Full output from skills/governance-control-mapping/. control_taxonomy_matrix provides the coverage_classification per control for the CCR numerator. evidence_registry is required for GTG-6 evidence traceability. Note: control_mapping_output.json uses uppercase type strings (known defect, PR-003 class); field names are correct.",
+      "required": [
+        "control_taxonomy_matrix"
+      ],
+      "properties": {
+        "executive_summary": {
+          "type": "string"
+        },
+        "control_taxonomy_matrix": {
+          "type": "array",
+          "description": "Per-control coverage classification entries. Each item has control_id, control_name, control_type, control_method, and coverage_classification. coverage_classification enum: [Fully Covered by Ethana, Partially Covered by Ethana, Covered by Cursory Service, Third-Party Control Required, Customer-Owned Control]. CCR numerator: Implemented (first three except Partially) + Partially × 0.5. Third-Party Control Required counts as 0 — gap, not coverage."
+        },
+        "preventive_controls": {
+          "type": "array"
+        },
+        "detective_controls": {
+          "type": "array"
+        },
+        "corrective_controls": {
+          "type": "array"
+        },
+        "evidence_registry": {
+          "type": "array",
+          "description": "Evidence artifacts supporting control implementations. Required for GTG-6: all Implemented controls in Section 3 must cite an evidence_id from this registry."
+        },
+        "raci_matrix": {
+          "type": "array"
+        }
+      },
+      "additionalProperties": true
+    },
+    "iso_42001_output": {
+      "type": "object",
+      "description": "Full output from skills/iso-42001-gap-assessment/. ams, ars, critical_gaps, and certification_classification are required for GTG-3 evaluation, Section 4 gap register, and Section 6 framework compliance scores. CRITICAL: field name is critical_gaps (integer) — not critical_gap_count. iso-42001-gap-assessment-output.schema.json uses correct lowercase types and additionalProperties: false.",
+      "required": [
+        "ams",
+        "ars",
+        "critical_gaps",
+        "certification_classification"
+      ],
+      "properties": {
+        "ams": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "AIMS Maturity Score. Pass-through to Section 10 — do not recalculate. Sourced from iso-42001-gap-assessment-output.schema.json."
+        },
+        "ars": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Audit Readiness Score. Pass-through to Section 10 — do not recalculate."
+        },
+        "critical_gaps": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of Critical-severity gaps in the ISO 42001 Gap Register. Field name is critical_gaps — not critical_gap_count. Used to populate Section 4 gap register and evaluate CGC criteria."
+        },
+        "major_gaps": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "minor_gaps": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "certification_classification": {
+          "type": "string",
+          "enum": [
+            "Certification Ready",
+            "Near Ready",
+            "Significant Gaps",
+            "Major Gaps"
+          ],
+          "description": "ISO 42001 certification readiness classification. Pass-through to Section 6 and Section 10 — do not recalculate. Enum values must match iso-42001-gap-assessment-output.schema.json exactly."
+        },
+        "months_to_readiness": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "critical_gap_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "IDs of Critical-severity gaps from the ISO 42001 Gap Register. Each must appear in Section 4 (Governance Gap Register) with Critical severity."
+        },
+        "gap_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ams_clause_scores": {
+          "type": "object",
+          "description": "Per-clause maturity scores used to populate Section 6 (Framework Compliance Scores) for ISO 42001. Do not recalculate — consume as-is."
+        },
+        "ars_component_scores": {
+          "type": "object"
+        },
+        "annex_a_coverage": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "capability_validation_output": {
+      "type": "object",
+      "description": "Strongly recommended. Full output from skills/ethana-capability-validation/. Required for GTG-4 and Section 8 (Capability Governance Alignment). Without this input, Section 8 cannot be completed and GTG-4 is noted absent. CCR ceiling is limited to control_taxonomy_matrix entries only — Ethana capability coverage is unverified.",
+      "properties": {
+        "allowed_claims": {
+          "type": "array",
+          "description": "Claims approved for use in downstream outputs. Each item has claim_text, cpl, permitted_contexts, required_caveat, and evidence_basis. Used in Section 8 to map capabilities to control domains."
+        },
+        "prohibited_claims": {
+          "type": "array",
+          "description": "Claims that must not appear in downstream outputs."
+        }
+      },
+      "additionalProperties": true
+    },
+    "client_profile": {
+      "type": "object",
+      "description": "Client context fields that determine mandatory framework checks, CGC threshold activation, and CCR domain scope. Absence produces input_completeness = Minimal. CGC threshold evaluation for jurisdiction-specific mandatory frameworks cannot be completed without client_profile.jurisdictions and ai_deployment_type.",
+      "properties": {
+        "sector": {
+          "type": "string",
+          "enum": [
+            "BFSI",
+            "Healthcare",
+            "Government",
+            "General Enterprise"
+          ],
+          "description": "BFSI triggers model risk overlay on control domain checks. Government triggers additional mandatory framework requirements."
+        },
+        "jurisdictions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "EU",
+              "UK",
+              "India",
+              "US",
+              "Other"
+            ]
+          },
+          "description": "Client's confirmed jurisdictions. Each jurisdiction with a status = Confirmed regulation in applicable_regulations must have corresponding framework coverage — absence is a CGC candidate."
+        },
+        "ai_deployment_type": {
+          "type": "string",
+          "enum": [
+            "High-Risk",
+            "Limited-Risk",
+            "Minimal-Risk"
+          ],
+          "description": "High-Risk: iso_42001_output absence is a Critical Governance Gap. Limited-Risk: framework adequacy checks apply but iso_42001_output is strongly recommended, not required."
+        },
+        "deployment_model": {
+          "type": "string",
+          "enum": [
+            "Cloud",
+            "Customer VPC",
+            "On-prem",
+            "Air-gapped"
+          ],
+          "description": "Constrains which coverage_classification entries are technically realisable. On-prem and Air-gapped deployments may affect which Ethana capabilities can be used to satisfy controls."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

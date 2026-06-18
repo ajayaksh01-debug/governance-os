@@ -1,0 +1,137 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GovernanceReviewOutput",
+  "description": "Output payload for the Governance Review skill. Represents the serialized Governance Release Decision (Section 10). This payload is the machine-readable Governance Readiness Certificate required by the Client Assessment Agent before completing a governance engagement. Analogous to ProposalReviewOutput in the commercial chain.",
+  "type": "object",
+  "required": [
+    "gas",
+    "ccr",
+    "cgc_count",
+    "mgf_count",
+    "classification",
+    "governance_gate_passed",
+    "review_date"
+  ],
+  "properties": {
+    "gas": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Governance Assessment Score. Base 100 minus (15 × missing_mandatory_framework_count) minus (10 × mgf_count) minus (2 × minor_finding_count). Set to 0 if any CGC is present — the absolute rule cannot be overridden. GAS is always reported even when the absolute rule applies, to document the non-CGC posture."
+    },
+    "ccr": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Control Coverage Rate. round((Implemented + (Partially Implemented × 0.5)) / Total Mandatory Controls × 100, 1). Denominator sourced from regulatory_mapping_output.control_requirements where mandatory = true. CCR is always computed and reported regardless of governance_gate_passed value."
+    },
+    "ccr_numerator": {
+      "type": "number",
+      "minimum": 0,
+      "description": "CCR numerator: implemented_count + (partially_implemented_count × 0.5). Implemented = controls with coverage_classification in [Fully Covered by Ethana, Covered by Cursory Service, Customer-Owned Control]. Partially = Partially Covered by Ethana. Enables independent verification: round(ccr_numerator / ccr_denominator × 100, 1) == ccr."
+    },
+    "ccr_denominator": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "CCR denominator: count of control_requirements from regulatory_mapping_output where mandatory = true. Must be sourced from the upstream input, not from control_taxonomy_matrix entry count — these are different values. ccr_denominator = 0 when no mandatory controls exist; check GHD4 if 0 but mandatory controls are known to exist."
+    },
+    "cgc_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of Critical Governance Gaps identified in Section 4. Any value > 0 forces classification = Not Governance Ready and gas = 0, regardless of CCR or other scores. Analogous to cfb_count in ProposalReviewOutput."
+    },
+    "cgc_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of Critical Governance Gap IDs from Section 4 (e.g. ['CGC-001', 'CGC-002']). Must reference GGP-[domain]-[n] gap register entries that have been evaluated against CGC criteria and confirmed as Critical Governance Gaps. Empty array when cgc_count = 0."
+    },
+    "mgf_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of Major Governance Findings. Each carries a -10 GAS deduction. Analogous to mrf_count in ProposalReviewOutput."
+    },
+    "mgf_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of Major Governance Finding IDs from Section 4 gap register. Empty array when mgf_count = 0."
+    },
+    "minor_finding_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of Minor Governance Findings. Each carries a -2 GAS deduction."
+    },
+    "high_risk_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of High severity residual risks in the Governance Risk Register (Section 5). Count > 1 prevents Governance Ready classification even when GAS and CCR thresholds are met."
+    },
+    "classification": {
+      "type": "string",
+      "enum": [
+        "Governance Ready",
+        "Conditional Governance",
+        "Not Governance Ready"
+      ],
+      "description": "Governance Readiness Classification. Not Governance Ready if any CGC present (cgc_count > 0), any mandatory GTG gate failed (governance_gate_passed = false), or scores fall below Conditional Governance thresholds (GAS < 65 or CCR < 60), regardless of other metrics. Governance Ready requires: GAS >= 85, CCR >= 80, cgc_count = 0, mgf_count = 0, high_risk_count <= 1. Conditional Governance: GAS >= 65, CCR >= 60, cgc_count = 0, mgf_count any, high_risk_count <= 2. Advisory Only is not supported."
+    },
+    "governance_gate_passed": {
+      "type": "boolean",
+      "description": "True only if GTG-1, GTG-2, GTG-3, and GTG-7 all passed. A false value means the review is incomplete and the classification is invalid. Analogous to traceability_gate_passed in ProposalReviewOutput. False does not prevent CCR, GAS, and gap register from being computed and reported."
+    },
+    "iso_42001_ams": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Pass-through of iso_42001_output.ams. Must match the upstream value exactly — do not round or recalculate. Absent when iso_42001_output was not provided (GTG-3 fail scenario)."
+    },
+    "iso_42001_ars": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Pass-through of iso_42001_output.ars. Must match the upstream value exactly."
+    },
+    "iso_42001_classification": {
+      "type": "string",
+      "enum": [
+        "Certification Ready",
+        "Near Ready",
+        "Significant Gaps",
+        "Major Gaps"
+      ],
+      "description": "Pass-through of iso_42001_output.certification_classification. Enum values match iso-42001-gap-assessment-output.schema.json exactly. Absent when iso_42001_output was not provided."
+    },
+    "frameworks_assessed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Names of regulatory instruments and governance frameworks assessed to completion in Section 6 — at least one domain rated Compliant, Partial, or Non-Compliant (not all domains Not Assessed). Must include at least one entry for GTG-7 to pass."
+    },
+    "review_date": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO 8601 date the Governance Review was completed."
+    },
+    "input_completeness": {
+      "type": "string",
+      "enum": [
+        "Full",
+        "Standard",
+        "Minimal"
+      ],
+      "description": "Full: all four inputs provided including capability_validation_output. Standard: three required inputs only, no capability_validation_output — GTG-4 noted absent. Minimal: required inputs present but client_profile absent — CGC threshold evaluation for jurisdiction-specific mandatory frameworks incomplete."
+    },
+    "required_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Ordered remediation actions from Section 9. CGC-addressing actions (Priority = Immediate) listed first, then MGF actions (Before Deployment), then advisory actions. Empty array for Governance Ready classification."
+    }
+  },
+  "additionalProperties": false
+}
