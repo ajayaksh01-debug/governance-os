@@ -1,0 +1,7 @@
+directories:
+  runs: "agents/ethana_proposal_agent/runtime/runs"
+  packages: "agents/ethana_proposal_agent/runtime/packages"
+  logs: "agents/ethana_proposal_agent/runtime/logs"
+thresholds:
+  pcs: 95
+  ctcs: 95
