@@ -1,0 +1,7 @@
+{
+  "incident_description": "In April 2023, Samsung Electronics experienced three separate data exfiltration incidents where employees submitted proprietary semiconductor measurement bugs and meeting notes to ChatGPT, allowing OpenAI to process and store confidential IP for model training.",
+  "incident_type": "Data Incident",
+  "affected_system": "ChatGPT",
+  "client_context": "Semiconductor manufacturing",
+  "target_maturity_level": "L3: Defined"
+}

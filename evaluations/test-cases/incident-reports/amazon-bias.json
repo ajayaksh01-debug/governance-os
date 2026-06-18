@@ -1,0 +1,7 @@
+{
+  "incident_description": "Between 2014 and 2017, Amazon's CV screening AI systematically penalised female-associated keywords and graduates of women's colleges, replicating gender discrimination present in historical hiring data.",
+  "incident_type": "Bias/Fairness Incident",
+  "affected_system": "CV Screening Tool",
+  "client_context": "HR Automated Recruitment",
+  "target_maturity_level": "L3: Defined"
+}

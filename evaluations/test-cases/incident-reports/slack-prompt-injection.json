@@ -1,0 +1,7 @@
+{
+  "incident_description": "In August 2024, PromptArmor disclosed that attackers could plant indirect prompt injection instructions in public Slack channels, manipulating Slack AI to exfiltrate private channel contents when users queried the AI.",
+  "incident_type": "AI Security Incident",
+  "affected_system": "Slack AI",
+  "client_context": "SaaS Collaboration Platform",
+  "target_maturity_level": "L3: Defined"
+}

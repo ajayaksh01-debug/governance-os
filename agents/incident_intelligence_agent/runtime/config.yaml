@@ -1,0 +1,17 @@
+# Incident Intelligence Agent Runtime Configuration
+# Version: 0.1
+
+schemas:
+  incident_assessment_input: "workflows/schemas/incident_assessment_input.schema.json"
+  incident_analysis_output: "workflows/schemas/incident_analysis_output.json"
+  control_mapping_output: "workflows/schemas/control_mapping_output.json"
+  capability_validation_output: "workflows/schemas/ethana-capability-validation-output.schema.json"
+
+directories:
+  runs: "agents/incident_intelligence_agent/runtime/runs"
+  packages: "agents/incident_intelligence_agent/runtime/packages"
+  logs: "agents/incident_intelligence_agent/runtime/logs"
+
+thresholds:
+  incident_analysis: 70
+  control_mapping: 85

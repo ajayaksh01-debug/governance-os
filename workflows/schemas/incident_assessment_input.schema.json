@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "IncidentAssessmentInput",
+  "type": "OBJECT",
+  "required": [
+    "incident_description",
+    "incident_type"
+  ],
+  "properties": {
+    "incident_description": {
+      "type": "STRING",
+      "minLength": 10
+    },
+    "incident_type": {
+      "type": "STRING",
+      "enum": [
+        "AI Security Incident",
+        "Agent Failure",
+        "Model Failure",
+        "Data Incident",
+        "Governance Event",
+        "Bias/Fairness Incident"
+      ]
+    },
+    "affected_system": {
+      "type": "STRING"
+    },
+    "client_context": {
+      "type": "STRING"
+    },
+    "target_maturity_level": {
+      "type": "STRING"
+    }
+  }
+}

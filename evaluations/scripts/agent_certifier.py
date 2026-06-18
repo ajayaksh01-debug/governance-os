@@ -9,17 +9,17 @@ def get_agent_definitions(repo_root):
         "Incident Intelligence Agent": {
             "required_skills": ["ai-incident-analysis", "governance-control-mapping"],
             "required_workflows": ["workflows/incident-assessment-workflow.md"],
-            "target_level": 3
+            "target_level": 4
         },
         "Regulatory Watch Agent": {
             "required_skills": ["regulatory-mapping", "governance-control-mapping"],
             "required_workflows": ["workflows/regulatory-compliance-workflow.md"],
-            "target_level": 3
+            "target_level": 4
         },
         "Capability Validation Agent": {
             "required_skills": ["ethana-capability-validation"],
             "required_workflows": [],  # Executes on CPM commits directly
-            "target_level": 3
+            "target_level": 4
         },
         "Client Assessment Agent": {
             "required_skills": ["regulatory-mapping", "iso-42001-gap-assessment", "governance-control-mapping", "ethana-solution-mapping"],
@@ -79,7 +79,10 @@ def certify_agent(repo_root, agent_name, spec):
     # Level 4: Production Ready
     # Level 4 is reserved for agents that have the actual agent codebase committed under /agents/
     agent_dir = repo_root / "agents" / agent_name.lower().replace(" ", "_")
-    if not agent_dir.exists() or not any(agent_dir.iterdir()):
+    agent_dir_hyphen = repo_root / "agents" / agent_name.lower().replace(" ", "-")
+    exists_underscore = agent_dir.exists() and any(agent_dir.iterdir())
+    exists_hyphen = agent_dir_hyphen.exists() and any(agent_dir_hyphen.iterdir())
+    if not exists_underscore and not exists_hyphen:
         return 3, "Skills, workflows, and structural evaluations complete. Ready for agent codebase implementation."
         
     return 4, "Fully certified. Agent codebase and dependencies verified."
