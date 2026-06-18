@@ -11,7 +11,7 @@
 
 This report documents the verification of the **Ethana Proposal Agent Runtime v0.1** after replacing the mock fixture matching with the **Dynamic Claim Analysis Engine (PR-001)**. Five distinct scenarios were tested, covering the intake trigger schema, dynamic review execution, score validations (Proposal Compliance Score (PCS) and Claim Traceability Coverage Score (CTCS)), absolute Claims Firewall checks against the canonical product model, and re-gate validation on human modification notes. 
 
-All 5 integration test cases passed successfully using the dynamic analysis logic.
+All 6 integration test cases passed successfully using the dynamic analysis logic.
 
 ---
 
@@ -24,6 +24,7 @@ All 5 integration test cases passed successfully using the dynamic analysis logi
 | `test_fixture_3_mixed_roadmap_claims_rejected_path` | `HALTED_FIREWALL_BREACH` | No | **Yes** | No | **Passed** |
 | `test_fixture_3_mixed_roadmap_claims_post_correction` | `COMPLETE` | **Yes** | No | No | **Passed** |
 | `test_approval_modification_note_firewall_breach` | `HALTED_FIREWALL_BREACH` | No | **Yes** | No | **Passed** |
+| `test_tg3_fail_when_feature_mapping_absent` | n/a (executor direct) | No | No | No | **Passed** |
 
 ---
 
@@ -52,3 +53,7 @@ All 5 integration test cases passed successfully using the dynamic analysis logi
 ### 3.5 `test_approval_modification_note_firewall_breach`
 * **Objective:** Verify that attempts to insert unreleased capability claims in human sign-off notes are blocked by the Claims Firewall.
 * **Analysis:** The initial proposal is clean. During the sign-off step, the approver includes notes referencing `Visual Agent Builder`. The orchestrator intercepts the note, triggers a Claims Firewall breach, and halts the run in `HALTED_FIREWALL_BREACH`.
+
+### 3.6 `test_tg3_fail_when_feature_mapping_absent`
+* **Objective:** Verify that the skill executor enforces TG-3 when `feature_mapping_output` is null, independent of the orchestrator's intake schema validation.
+* **Analysis:** The intake schema (`proposal-review-input.schema.json`) is the primary guard — it rejects `null` as a type mismatch for a required `object` field, halting at `HALTED_INTAKE_INVALID` before the skill executes. This test exercises the executor's secondary enforcement: when called directly with `feature_mapping_output = None`, the executor correctly sets `traceability_gate_passed = False` and overrides `classification` to `"Rejected"` while leaving `cfb_count = 0`, distinguishing a TG gate failure from a Claims Firewall breach. The clean-proposal fixture is used to confirm that TG-3 Fail overrides an otherwise Approved classification.

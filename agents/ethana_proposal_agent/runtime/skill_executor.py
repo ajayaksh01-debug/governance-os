@@ -106,7 +106,16 @@ class SkillExecutor:
         logger.log("SKILL_EXECUTION", "SUCCESS", "Proposal Review started.")
         
         proposal_text = inputs.get("draft_proposal", "")
-        
+
+        # TG-3 gate: evaluate Feature Mapping availability before any processing.
+        # The input schema is the primary guard; this is the secondary guard in the executor.
+        feature_mapping_output = inputs.get("feature_mapping_output")
+        tg3_passed = (
+            feature_mapping_output is not None
+            and isinstance(feature_mapping_output, dict)
+            and "feature_validation_table" in feature_mapping_output
+        )
+
         # Strip frontmatter if present to avoid keyword false positives
         content_text = proposal_text
         if proposal_text.startswith("---"):
@@ -406,6 +415,11 @@ class SkillExecutor:
         else:
             ctcs = 100.0
 
+        # Capture explainability fields before roadmap augmentation overwrites the component counts.
+        # These represent the exact values used in the CTCS formula above.
+        ctcs_numerator = round(traced_count + 0.5 * partially_traced_count, 1)
+        ctcs_denominator = total_denominator
+
         # For compiling review report counts of all audited claims
         total_claims_count = len(claims)
         roadmap_claims = [c for c in claims if c.get("claim_type") == "Roadmap Item"]
@@ -436,20 +450,29 @@ class SkillExecutor:
         else:
             classification = "Rejected"
 
+        # TG-3 gate enforcement: SKILL.md §10:226 prohibits issuing any positive
+        # Release Classification when a mandatory Pass gate has not been confirmed.
+        if not tg3_passed:
+            classification = "Rejected"
+
         # Input completeness determination
         input_completeness = "Full"
-        if "capability_validation_output" not in inputs and "regulatory_mapping_output" not in inputs:
+        if not tg3_passed:
+            input_completeness = "Standard"
+        elif "capability_validation_output" not in inputs and "regulatory_mapping_output" not in inputs:
             input_completeness = "Standard"
 
         # Prepare structured output conforming to proposal-review-output.schema.json
         proposal_review_json = {
             "pcs": pcs,
             "ctcs": ctcs,
+            "ctcs_numerator": ctcs_numerator,
+            "ctcs_denominator": ctcs_denominator,
             "classification": classification,
             "cfb_count": len(cfbs),
             "mrf_count": len(mrfs),
             "minor_count": len(minors),
-            "traceability_gate_passed": True,
+            "traceability_gate_passed": tg3_passed,
             "document_reviewed": doc_reviewed,
             "review_date": datetime.now(timezone.utc).date().isoformat(),
             "total_claims_audited": total_claims_count,
@@ -488,7 +511,14 @@ class SkillExecutor:
         md += "## 1. Executive Assessment\n\n"
         md += f"A compliance review of the document **{data['document_reviewed']}** was completed on **{data['review_date']}**. "
         md += f"A total of {data['total_claims_audited']} Ethana capability claims were audited against the canonical product model. "
-        if data["cfb_count"] > 0:
+        if not data["traceability_gate_passed"]:
+            md += (
+                "The review is incomplete: TG-3 (Feature Mapping) gate did not pass — "
+                "feature_mapping_output was not provided. "
+                f"Release Classification: **{data['classification']}**. "
+                "No positive Release Classification may be issued until TG-3 passes. "
+            )
+        elif data["cfb_count"] > 0:
             md += f"Critical compliance failures were detected: {data['cfb_count']} Critical Firewall Breaches (CFB) were identified. "
             md += f"The release of this document is **Blocked** (Release Classification: {data['classification']}). "
         elif data["mrf_count"] > 0:
@@ -589,7 +619,8 @@ class SkillExecutor:
         md += "|---|---|---|\n"
         md += "| TG-1 | Complete draft | Pass |\n"
         md += "| TG-2 | Solution Mapping | Pass |\n"
-        md += "| TG-3 | Feature Mapping | Pass |\n"
+        tg3_status = "Pass" if data["traceability_gate_passed"] else "Fail"
+        md += f"| TG-3 | Feature Mapping | {tg3_status} |\n"
         md += "| TG-4 | Capability Validation | Pass |\n"
         md += "| TG-5 | Regulatory Mapping | Pass |\n"
         md += "| TG-6 | Control Mapping | Pass |\n"
@@ -597,8 +628,13 @@ class SkillExecutor:
         md += "\n"
         
         md += "```\n"
+        md += f"Total claims audited:            {data['total_claims_audited']}\n"
+        md += f"Claims Traced:                   {data['traced_count']}\n"
+        md += f"Claims Partially Traced:         {data['partially_traced_count']} × 0.5 = {data['partially_traced_count'] * 0.5}\n"
+        md += f"CTCS numerator:                  {data['ctcs_numerator']}\n"
+        md += f"CTCS denominator:                {data['ctcs_denominator']}\n"
         md += f"Final PCS:                       {data['pcs']} / 100\n"
-        md += f"Final CTCS:                      {data['ctcs']} / 100\n"
+        md += f"Final CTCS:                      {data['ctcs']} / 100  ({data['ctcs_numerator']} / {data['ctcs_denominator']} × 100)\n"
         md += f"Release Classification:          {data['classification']}\n"
         md += "```\n"
         

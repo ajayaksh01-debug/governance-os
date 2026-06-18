@@ -38,6 +38,8 @@ The dynamic runtime performs the following operations without static hard-coding
 3.  **Claims Firewall Checks:** Evaluates capability claims against the canonical status and their section context, dynamically flagging CFBs, MRFs, and Minors.
 4.  **Deduction-Based Scoring:** Calculates PCS and CTCS dynamically from the number of unique breaches, findings, and traced claims.
 5.  **Audit Trail & Deliverables:** Compiles signed release deliverables under the `packages/` directory.
+6.  **TG-3 Gate Enforcement:** Reads `feature_mapping_output` from inputs and evaluates TG-3 status. A null or absent value sets `traceability_gate_passed = False` and overrides the classification to `Rejected` regardless of PCS or CTCS. The intake schema is the primary guard; the executor check is the secondary guard.
+7.  **CTCS Explainability (PR-002):** Captures `ctcs_numerator` and `ctcs_denominator` at calculation time — before roadmap augmentation overwrites the component counts — and exposes both in the JSON payload and the Section 10 Markdown arithmetic block, enabling independent audit verification of the CTCS formula.
 
 ---
 
@@ -51,5 +53,5 @@ python3 evaluations/scripts/test_proposal_review_runtime.py -v
 ```
 
 *   **Certification Status:** `READY` (Ethana Proposal Agent validated to Level 4).
-*   **Test Status:** `OK` (All 5 integration tests passed successfully with dynamic logic).
+*   **Test Status:** `OK` (All 6 integration tests passed successfully with dynamic logic).
 *   **Maturity Level:** Production-grade dynamic engine. No fixture dependencies exist.

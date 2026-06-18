@@ -71,6 +71,20 @@ This baseline documents the expected score ranges, CTCS values, classification o
 
 ---
 
+### 1.4 TG-3 Fail path (executor direct — `feature_mapping_output` absent)
+
+This fixture is exercised by `test_tg3_fail_when_feature_mapping_absent`. It calls the executor directly, bypassing orchestrator intake, because the input schema correctly rejects null `feature_mapping_output` at intake before the skill runs.
+
+| Metric | Expected | Notes |
+|---|---|---|
+| CFB count | 0 | TG gate failure is not a Claims Firewall breach. |
+| `traceability_gate_passed` | **False** | The authoritative schema signal for an incomplete review. |
+| Classification | **Rejected** | TG-3 Fail overrides classification regardless of PCS or CTCS. |
+
+**Regression alert:** Any output with `traceability_gate_passed = True` when `feature_mapping_output` is absent has failed the TG-3 secondary enforcement. Any output with a non-Rejected classification when `traceability_gate_passed = False` has violated the mandatory gate contract.
+
+---
+
 ## 2. Structural Requirements
 
 Every proposal review output must contain all ten required sections. The `regression_tester.py` script checks for the following headers in every output document:
@@ -111,6 +125,8 @@ Every proposal review output must contain all ten required sections. The `regres
   ]
 }
 ```
+
+**PR-002 — CTCS arithmetic requirement:** Every Section 10 Markdown block must contain a `CTCS numerator` label and a `CTCS denominator` label. The values must satisfy: `round(ctcs_numerator / ctcs_denominator × 100, 1) == ctcs` (when `ctcs_denominator > 0`). These fields are computed from non-roadmap claims only, before roadmap augmentation. They are not equal to `traced_count` and `total_claims_audited` when roadmap items are present in the proposal.
 
 ---
 

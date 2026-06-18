@@ -78,7 +78,20 @@ class TestProposalReviewRuntime(unittest.TestCase):
         self.assertEqual(state["intermediate_data"]["proposal_review_json"]["pcs"], 100)
         self.assertEqual(state["intermediate_data"]["proposal_review_json"]["ctcs"], 100.0)
         self.assertEqual(state["intermediate_data"]["proposal_review_json"]["classification"], "Approved")
-        
+
+        # PR-002: verify CTCS explainability fields are present and internally consistent
+        review_json = state["intermediate_data"]["proposal_review_json"]
+        self.assertIn("ctcs_numerator", review_json)
+        self.assertIn("ctcs_denominator", review_json)
+        if review_json["ctcs_denominator"] > 0:
+            computed = round(review_json["ctcs_numerator"] / review_json["ctcs_denominator"] * 100, 1)
+            self.assertEqual(computed, review_json["ctcs"])
+
+        # PR-002: verify Markdown report contains CTCS arithmetic labels
+        report_md = state["intermediate_data"]["proposal_review_md"]
+        self.assertIn("CTCS numerator", report_md)
+        self.assertIn("CTCS denominator", report_md)
+
         # Submit Peer sign-off Approval
         self.orchestrator.submit_approval(self.trace_id, "Approve", "Legal Counsel", "Approved clean proposal release.")
         
@@ -160,6 +173,31 @@ class TestProposalReviewRuntime(unittest.TestCase):
         
         state = state_mgr.load_state()
         self.assertEqual(state["status"], "COMPLETE")
+
+    def test_tg3_fail_when_feature_mapping_absent(self):
+        """Verifies TG-3 = Fail when feature_mapping_output is None.
+
+        Calls the executor directly: the intake schema correctly rejects null
+        feature_mapping_output at orchestrator intake (HALTED_INTAKE_INVALID),
+        making a full start_run test impossible without a schema change.
+        This test exercises the executor's second-line TG-3 enforcement.
+        """
+        inputs = self.get_base_inputs("clean-proposal")
+        inputs["feature_mapping_output"] = None
+
+        state_mgr = StateManager(str(self.orchestrator.runs_dir), self.trace_id)
+        logger = AuditLogger(str(self.orchestrator.logs_dir), self.trace_id)
+        state_mgr.initialize_run(inputs)
+        self.orchestrator.executor.generate_traceability_id = lambda: self.trace_id
+
+        result = self.orchestrator.executor.execute_proposal_review(state_mgr, inputs, logger)
+
+        # TG-3 Fail must override classification to Rejected regardless of PCS/CTCS
+        self.assertEqual(result["classification"], "Rejected")
+        # traceability_gate_passed must be False — schema field marking the classification invalid
+        self.assertFalse(result["traceability_gate_passed"])
+        # cfb_count must remain 0 — this is a TG gate failure, not a Claims Firewall breach
+        self.assertEqual(result["cfb_count"], 0)
 
     def test_approval_modification_note_firewall_breach(self):
         """Tests claims firewall breach triggered during approval note bypass attempts."""

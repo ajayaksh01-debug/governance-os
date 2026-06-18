@@ -25,6 +25,16 @@
       "maximum": 100,
       "description": "Claim Traceability Coverage Score. (Traced + (Partially Traced x 0.5)) / Total Claims x 100."
     },
+    "ctcs_numerator": {
+      "type": "number",
+      "minimum": 0,
+      "description": "CTCS numerator: traced_count + (partially_traced_count x 0.5), computed from non-roadmap claims only before roadmap augmentation. Enables independent verification: round(ctcs_numerator / ctcs_denominator x 100, 1) == ctcs."
+    },
+    "ctcs_denominator": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "CTCS denominator: total non-roadmap claim count used in the CTCS formula. Excludes Roadmap Items. Not equal to total_claims_audited when roadmap items are present."
+    },
     "classification": {
       "type": "string",
       "enum": ["Approved", "Approved with Revisions", "Conditional Release", "Rejected"],
