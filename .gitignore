@@ -17,3 +17,7 @@ __pycache__/
 
 # Environment
 .env
+
+# Runtime artifacts
+agents/ethana_proposal_agent/runtime/logs/
+agents/ethana_proposal_agent/runtime/runs/
