@@ -51,7 +51,8 @@ CONFORMANT_FMO = {
             "poc_readiness": "Ready"
         }
     ],
-    "overall_tfs_score": 78
+    "overall_tfs_score": 78,
+    "production_tfs_score": 78
 }
 
 

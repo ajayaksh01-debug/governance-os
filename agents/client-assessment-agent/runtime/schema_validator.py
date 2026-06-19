@@ -17,6 +17,7 @@ class SchemaValidator:
             "iso42001_output": "iso-42001-gap-assessment-output.schema.json",
             "capability_validation_output": "ethana-capability-validation-output.schema.json",
             "proposal_review_output": "proposal-review-output.schema.json",
+            "feature_mapping_output": "feature_mapping_output.json",
         }
         for key, filename in schema_files.items():
             path = self.schemas_dir / filename

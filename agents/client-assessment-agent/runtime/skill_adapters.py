@@ -307,6 +307,57 @@ class Skill5Adapter(BaseSkillAdapter):
 
 
 # ---------------------------------------------------------------------------
+# Skill FM — ethana-feature-mapping (CA-local net-new executor)
+# ---------------------------------------------------------------------------
+
+FM_ADAPTER_KEY = "fm"
+
+
+class SkillFMAdapter(BaseSkillAdapter):
+    """Wraps the CA-local FeatureMappingExecutor (no external source runtime)."""
+    REQUIRED_OUTPUT_KEYS = (
+        "feature_validation_table", "overall_tfs_score", "production_tfs_score",
+        "quality_score", "markdown_output",
+    )
+
+    def source_executor(self):
+        if self._source_executor is not None:
+            return self._source_executor
+        try:
+            from feature_mapping_executor import FeatureMappingExecutor  # noqa: PLC0415
+        except ImportError:
+            from skills.feature_mapping_executor import (  # noqa: PLC0415
+                FeatureMappingExecutor,
+            )
+        self._source_executor = FeatureMappingExecutor(self.runs_dir, self.logs_dir)
+        return self._source_executor
+
+    def map_inputs(self, ca_inputs: dict, upstream: dict) -> dict:
+        skill_3_json = upstream.get("skill_3_json")
+        if not isinstance(skill_3_json, dict):
+            raise SkillAdapterError(
+                "Skill FM requires Skill 3 output (skill_3_json) in intermediate_data."
+            )
+        matched_capabilities = skill_3_json.get("matched_capabilities", [])
+        if not matched_capabilities:
+            raise SkillAdapterError(
+                "Skill FM requires non-empty matched_capabilities from Skill 3 output."
+            )
+        return {
+            "matched_capabilities": matched_capabilities,
+            "deployment_constraint": ca_inputs.get("deployment_constraint", ""),
+            "customer_sector": ca_inputs.get("industry", ""),
+            "poc_duration": ca_inputs.get("poc_duration", ""),
+        }
+
+    def invoke(self, src, mapped: dict, state_mgr, logger) -> dict:
+        return src.execute_feature_mapping(mapped, logger)
+
+    def map_output(self, raw: dict, mapped: dict, src, state_mgr) -> dict:
+        return dict(raw)
+
+
+# ---------------------------------------------------------------------------
 # Skill 6 — ethana-proposal-review (ethana_proposal_agent)
 # ---------------------------------------------------------------------------
 
@@ -337,7 +388,7 @@ class Skill6Adapter(BaseSkillAdapter):
         return {
             "draft_proposal": draft_proposal,
             "solution_mapping_output": upstream.get("skill_3_json"),
-            "feature_mapping_output": None,  # documented architectural gap; never fabricated
+            "feature_mapping_output": upstream.get("skill_fm_json"),
             "capability_validation_output": upstream.get("skill_5_json"),
             "regulatory_mapping_output": upstream.get("skill_1_json"),
             "control_mapping_output": upstream.get("skill_2_json"),
@@ -478,10 +529,11 @@ ADAPTER_CLASSES = {
     3: Skill3Adapter,
     4: Skill4Adapter,
     5: Skill5Adapter,
+    FM_ADAPTER_KEY: SkillFMAdapter,
     6: Skill6Adapter,
 }
 
 
 def build_adapter_registry(runs_dir, logs_dir) -> dict:
-    """Construct one adapter instance per wired skill (1, 2, 3, 4, 5, 6)."""
+    """Construct one adapter instance per wired skill (1, 2, 3, 4, 5, fm, 6)."""
     return {num: cls(runs_dir, logs_dir) for num, cls in ADAPTER_CLASSES.items()}

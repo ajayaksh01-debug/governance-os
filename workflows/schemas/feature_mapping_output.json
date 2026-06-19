@@ -4,7 +4,8 @@
   "type": "object",
   "required": [
     "feature_validation_table",
-    "overall_tfs_score"
+    "overall_tfs_score",
+    "production_tfs_score"
   ],
   "properties": {
     "feature_validation_table": {
@@ -22,6 +23,11 @@
       }
     },
     "overall_tfs_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "production_tfs_score": {
       "type": "integer",
       "minimum": 0,
       "maximum": 100

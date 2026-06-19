@@ -520,6 +520,69 @@ class Orchestrator:
             return
 
         state_mgr.transition_to("GATE_5_PASSED", f"Gate 5c ECS {ecs}/100 passed.")
+        self._run_skill_fm(state_mgr, logger)
+
+    def _run_skill_fm(self, state_mgr: StateManager, logger: AuditLogger) -> None:
+        inputs = state_mgr.get_state().get("inputs", {})
+        state_mgr.transition_to("SKILL_FM_RUNNING", "Skill FM (ethana-feature-mapping) started.")
+        logger.log("SKILL_FM", "SUCCESS", "Skill FM execution started.")
+
+        try:
+            sfm_json = self.executor.execute_skill_fm(state_mgr, inputs, logger)
+        except Exception as e:
+            state_mgr.transition_to("HALTED_ESCALATION", f"Skill FM execution error: {e}")
+            logger.log("SKILL_FM", "FAILED", f"Skill FM execution error: {e}")
+            return
+
+        state_mgr.update_intermediate_data("skill_fm_json", sfm_json)
+        state_mgr.update_intermediate_data("skill_fm_md", sfm_json.get("markdown_output", ""))
+
+        # Gate evaluation runs from SKILL_FM_COMPLETE so halt states are valid targets.
+        state_mgr.transition_to("SKILL_FM_COMPLETE", "Skill FM execution complete.")
+
+        # Gate FM-a — schema conformance
+        if not self._check_schema_gate(
+            state_mgr, logger, sfm_json, "feature_mapping_output",
+            "HALTED_GATE_FM_SCHEMA", "Gate FM-a",
+        ):
+            return
+
+        # Gate FM-a — non-empty feature_validation_table
+        if not sfm_json.get("feature_validation_table"):
+            state_mgr.transition_to(
+                "HALTED_GATE_FM_EMPTY_TABLE",
+                "Gate FM-a: feature_validation_table is empty.",
+            )
+            logger.log("GATE_FM_A", "FAILED", "feature_validation_table is empty.")
+            return
+
+        # Gate FM-b — Claims Firewall
+        if not self._run_firewall_check(
+            state_mgr, logger,
+            sfm_json.get("markdown_output", ""),
+            "FM-b", "HALTED_FIREWALL_BREACH",
+        ):
+            return
+
+        # Gate FM-c — production TFS threshold
+        production_tfs = sfm_json.get(
+            "production_tfs_score", inputs.get("mock_skill_fm_score", 92)
+        )
+        tfs_pass = int(self.config.get("thresholds", {}).get("skill_fm_tfs_pass", 85))
+
+        if production_tfs < tfs_pass:
+            state_mgr.transition_to(
+                "HALTED_GATE_FM_LOW_TFS",
+                f"Gate FM-c: production TFS {production_tfs}/100 < {tfs_pass}.",
+            )
+            logger.log("GATE_FM_C", "FAILED", f"Production TFS {production_tfs}/100 < {tfs_pass}.")
+            return
+
+        state_mgr.transition_to(
+            "GATE_FM_PASSED",
+            f"Gate FM-c: production TFS {production_tfs}/100 passed.",
+        )
+        logger.log("GATE_FM_C", "SUCCESS", f"Production TFS {production_tfs}/100 passed.")
         self._run_skill_6(state_mgr, logger)
 
     def _run_skill_6(self, state_mgr: StateManager, logger: AuditLogger) -> None:

@@ -293,7 +293,7 @@ class TestStrictAdditionalPropertiesContract(AdapterTestBase):
 class TestAdapterRegistry(AdapterTestBase):
     def test_registry_has_all_six_skills_wired(self):
         reg = build_adapter_registry(self.runs, self.logs)
-        self.assertEqual(sorted(reg.keys()), [1, 2, 3, 4, 5, 6])
+        self.assertEqual(set(reg.keys()), {1, 2, 3, 4, 5, 6, "fm"})
 
     def test_net_new_skills_3_and_4_wired(self):
         reg = build_adapter_registry(self.runs, self.logs)

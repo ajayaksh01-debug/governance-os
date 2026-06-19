@@ -22,7 +22,7 @@ def get_agent_definitions(repo_root):
             "target_level": 4
         },
         "Client Assessment Agent": {
-            "required_skills": ["regulatory-mapping", "iso-42001-gap-assessment", "governance-control-mapping", "ethana-solution-mapping"],
+            "required_skills": ["regulatory-mapping", "iso-42001-gap-assessment", "governance-control-mapping", "ethana-solution-mapping", "ethana-feature-mapping"],
             "required_workflows": ["workflows/governance-assessment-workflow.md"],
             "target_level": 4
         },

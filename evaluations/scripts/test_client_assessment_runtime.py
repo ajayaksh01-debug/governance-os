@@ -102,6 +102,22 @@ S5_FIXTURE = {
     "markdown_output": "# Capability Validation\n\nECS: 94/100.",
 }
 
+SFM_FIXTURE = {
+    "feature_validation_table": [
+        {
+            "proposed_feature": "Credit Risk Monitoring",
+            "canonical_capability": "Risk Monitoring Dashboard",
+            "integration_path": "Native API",
+            "tfs_score": 92,
+            "poc_readiness": "Ready",
+        },
+    ],
+    "overall_tfs_score": 92,
+    "production_tfs_score": 92,
+    "quality_score": 90,
+    "markdown_output": "# Feature Mapping\n\nTechnical fit validated.",
+}
+
 S6_FIXTURE_APPROVED = {
     "pcs": 91,
     "ctcs": 88,
@@ -152,7 +168,8 @@ class CARuntime(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
-    def _wire_skills(self, s1=None, s2=None, s3=None, s4=None, s5=None, s6=None):
+    def _wire_skills(self, s1=None, s2=None, s3=None, s4=None, s5=None,
+                     sfm=None, s6=None):
         if s1 is not None:
             self.orch.executor.execute_skill_1 = lambda sm, inp, lg: s1
         if s2 is not None:
@@ -163,6 +180,8 @@ class CARuntime(unittest.TestCase):
             self.orch.executor.execute_skill_4 = lambda sm, inp, lg: s4
         if s5 is not None:
             self.orch.executor.execute_skill_5 = lambda sm, inp, lg: s5
+        if sfm is not None:
+            self.orch.executor.execute_skill_fm = lambda sm, inp, lg: sfm
         if s6 is not None:
             self.orch.executor.execute_skill_6 = lambda sm, inp, lg: s6
 
@@ -173,6 +192,7 @@ class CARuntime(unittest.TestCase):
             s3=S3_FIXTURE,
             s4=S4_FIXTURE,
             s5=S5_FIXTURE,
+            sfm=SFM_FIXTURE,
             s6=s6 or S6_FIXTURE_APPROVED,
         )
 
@@ -850,8 +870,11 @@ class TestCriticalDefectRegressions(CARuntime):
 # ---------------------------------------------------------------------------
 
 class TestStateMachineStructure(unittest.TestCase):
-    def test_valid_transitions_has_59_states(self):
-        self.assertEqual(len(VALID_TRANSITIONS), 59)
+    def test_valid_transitions_has_65_states(self):
+        # 59 base states + 6 Skill FM states (SKILL_FM_RUNNING, SKILL_FM_COMPLETE,
+        # GATE_FM_PASSED, HALTED_GATE_FM_SCHEMA, HALTED_GATE_FM_EMPTY_TABLE,
+        # HALTED_GATE_FM_LOW_TFS) added in PR-006.
+        self.assertEqual(len(VALID_TRANSITIONS), 65)
 
     def test_all_halted_states_terminal_or_conditional(self):
         halted = [s for s in VALID_TRANSITIONS if s.startswith("HALTED_")]

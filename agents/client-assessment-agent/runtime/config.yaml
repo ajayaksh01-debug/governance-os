@@ -16,6 +16,7 @@ thresholds:
   skill_4_pass: 85
   skill_4_below_threshold: 70
   skill_5_pass: 90
+  skill_fm_tfs_pass: 85
   skill_6_pcs_pass: 80
   skill_6_ctcs_pass: 80
 
