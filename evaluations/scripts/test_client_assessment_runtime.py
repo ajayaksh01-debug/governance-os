@@ -550,6 +550,104 @@ class TestSkill5Gates(CARuntime):
 
 
 # ---------------------------------------------------------------------------
+# Skill FM gate tests (Suite B — PR-006 Phase 3)
+# ---------------------------------------------------------------------------
+
+class TestSkillFMGates(CARuntime):
+    """FM-a / FM-b / FM-c halt-path and mock-override coverage."""
+
+    # Inputs with real schema validation enabled for all gates.
+    INPUTS_REAL_FM_SCHEMA = {
+        k: v for k, v in VALID_INPUTS.items() if k != "skip_schema_validation"
+    }
+
+    def _run_to_fm(self, sfm_fixture, inputs=None):
+        """Wire all skills and drive approvals until FM executes."""
+        self._wire_skills(
+            s1=S1_FIXTURE, s2=S2_FIXTURE, s3=S3_FIXTURE,
+            s4=S4_FIXTURE, s5=S5_FIXTURE,
+            sfm=sfm_fixture,
+            s6=S6_FIXTURE_APPROVED,
+        )
+        run_inputs = inputs if inputs is not None else VALID_INPUTS
+        tid = self.orch.start_run("new_client_onboarding", run_inputs)
+        self._approve_ag1(tid)
+        self._approve_ag2_both(tid)
+        self._approve_ag3(tid)
+        return tid
+
+    def _with_fm_schema_only(self):
+        """Patch validator: pass all schemas except feature_mapping_output (real validation)."""
+        real_validate = self.orch.validator.validate
+        def _selective(payload, schema_name):
+            if schema_name == "feature_mapping_output":
+                return real_validate(payload, schema_name)
+            return []
+        self.orch.validator.validate = _selective
+
+    # --- Gate FM-a: schema conformance ---
+
+    def test_fma_missing_required_field_halts_gate_fm_schema(self):
+        self._with_fm_schema_only()
+        sfm = {k: v for k, v in SFM_FIXTURE.items() if k != "feature_validation_table"}
+        tid = self._run_to_fm(sfm, inputs=self.INPUTS_REAL_FM_SCHEMA)
+        self.assertEqual(self._status(tid), "HALTED_GATE_FM_SCHEMA")
+
+    def test_fma_wrong_type_halts_gate_fm_schema(self):
+        self._with_fm_schema_only()
+        sfm = {**SFM_FIXTURE, "overall_tfs_score": "not_an_int"}
+        tid = self._run_to_fm(sfm, inputs=self.INPUTS_REAL_FM_SCHEMA)
+        self.assertEqual(self._status(tid), "HALTED_GATE_FM_SCHEMA")
+
+    def test_fma_empty_table_halts_gate_fm_empty_table(self):
+        # Schema is skipped (VALID_INPUTS); empty-table check catches the empty array.
+        sfm = {**SFM_FIXTURE, "feature_validation_table": []}
+        tid = self._run_to_fm(sfm)
+        self.assertEqual(self._status(tid), "HALTED_GATE_FM_EMPTY_TABLE")
+
+    # --- Gate FM-b: Claims Firewall ---
+
+    def test_fmb_simulated_breach_halts_firewall_breach(self):
+        inputs = {**VALID_INPUTS, "simulate_firewall_breach_at_gate": "FM-b"}
+        tid = self._run_to_fm(SFM_FIXTURE, inputs=inputs)
+        self.assertEqual(self._status(tid), "HALTED_FIREWALL_BREACH")
+
+    # --- Gate FM-c: production TFS threshold ---
+
+    def test_fmc_low_tfs_halts_gate_fm_low_tfs(self):
+        sfm = {**SFM_FIXTURE, "production_tfs_score": 80}
+        tid = self._run_to_fm(sfm)
+        self.assertEqual(self._status(tid), "HALTED_GATE_FM_LOW_TFS")
+
+    def test_fmc_boundary_tfs_85_passes_gate(self):
+        # Exactly 85 meets the >= 85 threshold — must advance to APPROVAL_4_PENDING.
+        sfm = {**SFM_FIXTURE, "production_tfs_score": 85}
+        tid = self._run_to_fm(sfm)
+        self.assertEqual(self._status(tid), "APPROVAL_4_PENDING")
+
+    def test_fmc_mock_score_used_when_production_tfs_absent(self):
+        # production_tfs_score absent; mock_skill_fm_score above threshold → passes.
+        sfm = {k: v for k, v in SFM_FIXTURE.items() if k != "production_tfs_score"}
+        inputs = {**VALID_INPUTS, "mock_skill_fm_score": 92}
+        tid = self._run_to_fm(sfm, inputs=inputs)
+        self.assertEqual(self._status(tid), "APPROVAL_4_PENDING")
+
+    def test_fmc_mock_score_below_threshold_halts(self):
+        # production_tfs_score absent; mock below threshold → halts.
+        sfm = {k: v for k, v in SFM_FIXTURE.items() if k != "production_tfs_score"}
+        inputs = {**VALID_INPUTS, "mock_skill_fm_score": 70}
+        tid = self._run_to_fm(sfm, inputs=inputs)
+        self.assertEqual(self._status(tid), "HALTED_GATE_FM_LOW_TFS")
+
+    def test_fmc_real_score_overrides_mock_when_present(self):
+        # production_tfs_score present (80, below 85); mock is 92 (above) — real wins.
+        sfm = {**SFM_FIXTURE, "production_tfs_score": 80}
+        inputs = {**VALID_INPUTS, "mock_skill_fm_score": 92}
+        tid = self._run_to_fm(sfm, inputs=inputs)
+        self.assertEqual(self._status(tid), "HALTED_GATE_FM_LOW_TFS")
+
+
+# ---------------------------------------------------------------------------
 # Skill 6 and AG-4 tests
 # ---------------------------------------------------------------------------
 

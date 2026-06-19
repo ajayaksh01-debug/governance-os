@@ -5,7 +5,8 @@
   "required": [
     "feature_validation_table",
     "overall_tfs_score",
-    "production_tfs_score"
+    "production_tfs_score",
+    "markdown_output"
   ],
   "properties": {
     "feature_validation_table": {
@@ -32,16 +33,14 @@
       "minimum": 0,
       "maximum": 100
     },
-    "sandbox_poc_scope": {
-      "type": "object",
-      "properties": {
-        "required_nodes": { "type": "integer" },
-        "test_apis": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "estimated_setup_weeks": { "type": "integer" }
-      }
+    "markdown_output": {
+      "type": "string",
+      "minLength": 1
+    },
+    "quality_score": {
+      "type": "integer",
+      "minimum": 70,
+      "maximum": 90
     }
   }
 }

@@ -25,6 +25,7 @@ sys.path.append(str(repo_root))
 
 from skill_adapters import (  # noqa: E402
     Skill1Adapter, Skill2Adapter, Skill4Adapter, Skill5Adapter, Skill6Adapter,
+    SkillFMAdapter, FM_ADAPTER_KEY,
     SkillAdapterError, build_adapter_registry,
 )
 from state_manager import StateManager  # noqa: E402
@@ -284,6 +285,51 @@ class TestStrictAdditionalPropertiesContract(AdapterTestBase):
         self._run_skill_2()
         out = Skill4Adapter(self.runs, self.logs).execute(self.sm, CA_INPUTS, self.lg)
         self._assert_no_extra_keys(out, "iso-42001-gap-assessment-output.schema.json")
+
+
+# ---------------------------------------------------------------------------
+# Skill FM adapter
+# ---------------------------------------------------------------------------
+
+class TestSkillFMAdapter(AdapterTestBase):
+    def setUp(self):
+        super().setUp()
+        self.adapter = SkillFMAdapter(self.runs, self.logs)
+
+    def test_required_output_keys_declared(self):
+        expected = {
+            "feature_validation_table", "overall_tfs_score", "production_tfs_score",
+            "quality_score", "markdown_output",
+        }
+        self.assertEqual(set(self.adapter.REQUIRED_OUTPUT_KEYS), expected)
+
+    def test_map_inputs_raises_when_skill_3_json_missing(self):
+        with self.assertRaises(SkillAdapterError):
+            self.adapter.map_inputs(CA_INPUTS, {})
+
+    def test_map_inputs_raises_when_matched_capabilities_empty(self):
+        upstream = {"skill_3_json": {"matched_capabilities": []}}
+        with self.assertRaises(SkillAdapterError):
+            self.adapter.map_inputs(CA_INPUTS, upstream)
+
+    def test_map_inputs_happy_path_extracts_correct_keys(self):
+        upstream = {"skill_3_json": {"matched_capabilities": [
+            {"capability_status": "Production", "ccs_score": 90, "matched_capability": "Audit Log"},
+        ]}}
+        inputs_with_context = {
+            **CA_INPUTS,
+            "deployment_constraint": "On-Premise",
+            "poc_duration": "30 days",
+        }
+        mapped = self.adapter.map_inputs(inputs_with_context, upstream)
+        self.assertIn("matched_capabilities", mapped)
+        self.assertEqual(len(mapped["matched_capabilities"]), 1)
+        self.assertEqual(mapped["deployment_constraint"], "On-Premise")
+        self.assertEqual(mapped["customer_sector"], CA_INPUTS["industry"])
+        self.assertEqual(mapped["poc_duration"], "30 days")
+
+    def test_fm_adapter_key_constant_is_fm(self):
+        self.assertEqual(FM_ADAPTER_KEY, "fm")
 
 
 # ---------------------------------------------------------------------------
