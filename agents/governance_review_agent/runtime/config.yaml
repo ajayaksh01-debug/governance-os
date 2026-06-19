@@ -1,0 +1,12 @@
+directories:
+  runs: "agents/governance_review_agent/runtime/runs"
+  packages: "agents/governance_review_agent/runtime/packages"
+  logs: "agents/governance_review_agent/runtime/logs"
+thresholds:
+  gas_governance_ready: 85
+  gas_conditional: 65
+  ccr_governance_ready: 80
+  ccr_conditional: 60
+  high_risk_governance_ready: 1
+  high_risk_conditional: 2
+  iso_ams_high_risk_threshold: 70

@@ -7,13 +7,13 @@ description: >
   under GR-001 calibration. Tests the Governance Ready path with GP-MGF downgrade, CCR arithmetic
   identity, ISO 42001 pass-through, and full GTG gate table pass.
 expected_classification: Governance Ready
-expected_gas: 94
+expected_gas: 96
 expected_ccr: 91.7
 expected_ccr_numerator: 16.5
 expected_ccr_denominator: 18
 expected_cgc_count: 0
 expected_mgf_count: 0
-expected_minor_finding_count: 3
+expected_minor_finding_count: 2
 expected_high_risk_count: 0
 expected_governance_gate_passed: true
 expected_iso_42001_ams: 82
@@ -48,10 +48,10 @@ Minor Finding, not an MGF), allowing MGF count = 0 and enabling Governance Ready
 2. **CCR arithmetic identity (GHD5):** `round(16.5 / 18 × 100, 1) == 91.7`
 3. **ISO 42001 pass-through (GHD6):** `output.iso_42001_ams == 82`, `output.iso_42001_ars == 76`, `output.iso_42001_classification == "Certification Ready"` — values sourced from `iso_42001_output`, not recalculated.
 4. **Full GTG gate table pass:** All 7 gates pass (GTG-4 passes because `capability_validation_output` is present).
-5. **GAS arithmetic:** `100 − 0×15 − 0×10 − 3×2 = 94`
-6. **Classification boundary:** GAS 94 ≥ 85, CCR 91.7 ≥ 80, CGC 0, MGF 0, High Risks 0 ≤ 1 → Governance Ready.
+5. **GAS arithmetic:** `100 − 0×15 − 0×10 − 2×2 = 96` — 2 minor findings: 1 GP-MGF (aggregated from major_gaps=1) + 1 from iso minor_gaps=2 (aggregated).
+6. **Classification boundary:** GAS 96 ≥ 85, CCR 91.7 ≥ 80, CGC 0, MGF 0, High Risks 0 ≤ 1 → Governance Ready.
 
-**Regression alert:** Any output with `mgf_count > 0` for this fixture has misapplied the GP-MGF rule — the ISO 42001 major gap must downgrade to a Minor Finding, not count as an MGF. Any output with `gas ≠ 94` has miscalculated the GAS arithmetic. Any output with `iso_42001_ams ≠ 82` has violated GHD6 (ISO pass-through).
+**Regression alert:** Any output with `mgf_count > 0` for this fixture has misapplied the GP-MGF rule — the ISO 42001 major gap must downgrade to a Minor Finding, not count as an MGF. Any output with `gas ≠ 96` has miscalculated the GAS arithmetic. Any output with `iso_42001_ams ≠ 82` has violated GHD6 (ISO pass-through).
 
 ---
 
@@ -232,25 +232,24 @@ CCR:                   round(16.5 / 18 × 100, 1) = 91.7
 GAS base:                         100
 Missing mandatory frameworks:      0 × −15 = 0
 Major Governance Findings (MGF):   0 × −10 = 0
-Minor Governance Findings:         3 × −2  = −6
-  GGP-IS-001 (GP-MGF downgraded)  −2
-  GGP-IS-002 (iso minor gap 1)    −2
-  GGP-IS-003 (iso minor gap 2)    −2
+Minor Governance Findings:         2 × −2  = −4
+  GGP-IS-001 (GP-MGF downgraded)  −2  (from iso_42001_output.major_gaps = 1)
+  GGP-IS-002 (iso minor gaps)     −2  (from iso_42001_output.minor_gaps = 2)
 Critical Governance Gap present:   No
-Final GAS:                         94
+Final GAS:                         96
 ```
 
 ### Expected JSON Payload
 
 ```json
 {
-  "gas": 94,
+  "gas": 96,
   "ccr": 91.7,
   "ccr_numerator": 16.5,
   "ccr_denominator": 18,
   "cgc_count": 0,
   "mgf_count": 0,
-  "minor_finding_count": 3,
+  "minor_finding_count": 2,
   "high_risk_count": 0,
   "classification": "Governance Ready",
   "governance_gate_passed": true,

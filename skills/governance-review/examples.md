@@ -103,9 +103,8 @@ ISO 42001 `critical_gap_ids` is empty. No Critical severity gaps from the ISO 42
 
 | Gap ID | Description | Source | Severity | Domain | Remediation Category |
 |---|---|---|---|---|---|
-| GGP-IS-001 | ISO 42001 Clause 10 (Improvement) — Major gap: no formal nonconformity tracking process documented | ISO 42001 Gap Assessment | Major | Management System | Process |
-| GGP-IS-002 | ISO 42001 Clause 9 (Performance Evaluation) — Minor gap: internal audit schedule defined but not yet executed | ISO 42001 Gap Assessment | Minor | Management System | Process |
-| GGP-IS-003 | ISO 42001 Clause 9 (Performance Evaluation) — Minor gap: management review evidence incomplete | ISO 42001 Gap Assessment | Minor | Management System | Evidence |
+| GGP-IS-001 | ISO 42001 — Major gap: 1 major gap identified in upstream gap register (from iso_42001_output.major_gaps = 1) | ISO 42001 Gap Assessment | Major | Management System | Process |
+| GGP-IS-002 | ISO 42001 — Minor gaps: 2 minor gaps identified in upstream gap register (from iso_42001_output.minor_gaps = 2) | ISO 42001 Gap Assessment | Minor | Management System | Process |
 
 GGP-IS-001 is a Gap/Process Major Governance Finding (GP-MGF) (sourced from `iso_42001_output.major_gaps`). Per GR-001 calibration, GP-MGF is downgraded and classified as a Minor Governance Finding, carrying a -2 GAS deduction and not counting as an MGF.
 
@@ -117,8 +116,8 @@ CGC count: 0.
 
 | Risk ID | Description | Severity | Residual After Controls | Owner | Status |
 |---|---|---|---|---|---|
-| GRK-001 | Nonconformity tracking gap (GGP-IS-001) — model risk decisions may not be formally documented and escalated | Medium | Low (controls reduce exposure; gap is in process documentation, not technical controls) | Chief Risk Officer | Residual |
-| GRK-002 | Internal audit not yet executed (GGP-IS-002) — ISO 42001 control effectiveness unconfirmed | Low | Low | Head of AI Governance | Accepted |
+| GRK-001 | ISO 42001 major management-system gap (GGP-IS-001) — downgraded to Minor Finding per GR-001; residual process documentation risk | Medium | Low | Chief Risk Officer | Residual |
+| GRK-002 | ISO 42001 minor management-system gaps (GGP-IS-002) — 2 minor gaps may reduce audit readiness | Low | Low | Head of AI Governance | Accepted |
 
 High risk count: 0.
 
@@ -144,7 +143,7 @@ High risk count: 0.
 - ARS: 76 / 100 (sourced from `iso_42001_output.ars` — not recalculated)
 - Certification Classification: Certification Ready (sourced from `iso_42001_output.certification_classification`)
 - Clause scores (from `ams_clause_scores`): Cl.4: 4.2, Cl.5: 3.8, Cl.6: 4.0, Cl.7: 3.9, Cl.8: 4.1, Cl.9: 3.7, Cl.10: 3.5
-- Overall: ISO 42001 Certification Ready. One Major gap (Clause 10 improvement process).
+- Overall: ISO 42001 Certification Ready. One Major gap (downgraded to Minor Finding per GR-001).
 
 All three entries assessed to completion — GTG-7 condition satisfied.
 
@@ -190,9 +189,9 @@ Control gaps where no validated Ethana capability provides coverage:
 GAS base:                          100
 Missing mandatory frameworks:       0 (all 3 assessed in Section 6)
 Major Governance Findings:          0 × −10 = 0
-Minor Governance Findings:          3 × −2  = −6 (GGP-IS-001, GGP-IS-002, GGP-IS-003)
+Minor Governance Findings:          2 × −2  = −4 (GGP-IS-001, GGP-IS-002)
 Critical Governance Gap present:    No
-Final GAS:                          100 − 6 = 94
+Final GAS:                          100 − 4 = 96
 ```
 
 **CCR arithmetic:**
@@ -216,21 +215,21 @@ ISO 42001 Classification:         Certification Ready
 **Classification check:**
 
 ```
-GAS 94 ≥ 85 ✓
+GAS 96 ≥ 85 ✓
 CCR 91.7 ≥ 80 ✓
 CGC count: 0 ✓
 MGF count: 0 ✓
 High Risks: 0 ≤ 1 ✓
 ```
 
-Under GR-001 calibration, GP-MGF items (such as the ISO 42001 Clause 10 Major gap, GGP-IS-001) are downgraded and classified as Minor Findings. Therefore:
+Under GR-001 calibration, GP-MGF items (from iso_42001_output.major_gaps) are downgraded and classified as Minor Findings. Therefore:
 MGF count: 0
-Minor finding count: 3 (GGP-IS-001, GGP-IS-002, GGP-IS-003)
+Minor finding count: 2 (GGP-IS-001, GGP-IS-002)
 High Risks: 0 ≤ 1
 
 Correct classification: Governance Ready
 
-GAS 94 ≥ 85 ✓, CCR 91.7 ≥ 80 ✓, CGC 0 ✓, MGF = 0 ✓, High Risks 0 ≤ 1 ✓.
+GAS 96 ≥ 85 ✓, CCR 91.7 ≥ 80 ✓, CGC 0 ✓, MGF = 0 ✓, High Risks 0 ≤ 1 ✓.
 
 This is the correct outcome. With GGP-IS-001 classified as a Minor Finding under GR-001, Meridian meets all requirements for a Governance Ready classification.
 
@@ -243,10 +242,10 @@ AIMS Maturity Score (AMS):    82 / 100
 Audit Readiness Score (ARS):  76 / 100
 ISO 42001 Classification:     Certification Ready
 CCR:                          91.7 / 100 (16.5 / 18 × 100)
-GAS:                          94 / 100
+GAS:                          96 / 100
 CGC count:                    0
 MGF count:                    0
-Minor Finding count:          3 (GGP-IS-001, GGP-IS-002, GGP-IS-003)
+Minor Finding count:          2 (GGP-IS-001, GGP-IS-002)
 High Residual Risks:          0
 governance_gate_passed:       true
 Governance Readiness:         GOVERNANCE READY
@@ -258,7 +257,7 @@ Required actions before next scheduled review:
 ──────────────────────────────────────────────────────────────────
 ```
 
-**Calibration note:** This example demonstrates a Governance Ready outcome. With GGP-IS-001 classified as a Minor Finding under GR-001, GAS reaches 94 and MGF count is 0, satisfying the requirements for Governance Ready classification.
+**Calibration note:** This example demonstrates a Governance Ready outcome. With GGP-IS-001 classified as a Minor Finding under GR-001, GAS reaches 96 and MGF count is 0, satisfying the requirements for Governance Ready classification.
 
 ---
 
