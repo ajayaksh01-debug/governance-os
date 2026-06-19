@@ -382,7 +382,7 @@ skill_sequence:
           - "Section 10: Ethana Configuration Guide"
         on_failure:
           retry: false
-          failure_state: HALTED_FIREWALL_BREACH_GCM
+          failure_state: HALTED_FIREWALL_BREACH
           failure_action: auto_route_to_compliance_director
           payload_includes:
             - capability name
@@ -485,7 +485,7 @@ skill_sequence:
           - "Section 5: Prohibited Claims Register (verify all entries are labelled correctly)"
         on_failure:
           retry: false
-          failure_state: HALTED_FIREWALL_BREACH_SOLUTION
+          failure_state: HALTED_FIREWALL_BREACH
           failure_action: auto_route_to_compliance_director
           payload_includes:
             - capability name
@@ -636,7 +636,7 @@ skill_sequence:
           - "Section 8.5: Claims Firewall Review"
         on_failure:
           retry: false
-          failure_state: HALTED_FIREWALL_BREACH_ISO
+          failure_state: HALTED_FIREWALL_BREACH
           failure_action: auto_route_to_compliance_director
           payload_includes:
             - capability name
@@ -785,7 +785,7 @@ skill_sequence:
           - "All: ECS/CPL determinations; allowed vs. prohibited claims tables"
         on_failure:
           retry: false
-          failure_state: HALTED_FIREWALL_BREACH_CAPVAL
+          failure_state: HALTED_FIREWALL_BREACH
           failure_action: auto_route_to_compliance_director
           payload_includes:
             - capability name
@@ -1186,25 +1186,25 @@ failure_handling:
       - HALTED_APPROVAL_1_REJECTED
     skill_2:
       - HALTED_GATE_2_SCHEMA
-      - HALTED_FIREWALL_BREACH_GCM
+      - HALTED_FIREWALL_BREACH
       - HALTED_GATE_2_SCORE_BELOW_THRESHOLD
       - HALTED_GATE_2_SCORE_INSUFFICIENT
     skill_3:
       - HALTED_GATE_3_SCHEMA
-      - HALTED_FIREWALL_BREACH_SOLUTION
+      - HALTED_FIREWALL_BREACH
       - HALTED_GATE_3_SCORE_INSUFFICIENT
       - HALTED_APPROVAL_2_REJECTED
       - HALTED_APPROVAL_2_PARTIAL
     skill_4:
       - HALTED_GATE_4_SCHEMA
-      - HALTED_FIREWALL_BREACH_ISO
+      - HALTED_FIREWALL_BREACH
       - HALTED_GATE_4_SCORE_BELOW_THRESHOLD
       - HALTED_GATE_4_SCORE_INSUFFICIENT
       - HALTED_APPROVAL_3_REJECTED
       - HALTED_APPROVAL_3_PARTIAL
     skill_5:
       - HALTED_GATE_5_SCHEMA
-      - HALTED_FIREWALL_BREACH_CAPVAL
+      - HALTED_FIREWALL_BREACH
       - HALTED_GATE_5_SCORE_INSUFFICIENT
     skill_6:
       - HALTED_GATE_6_SCHEMA

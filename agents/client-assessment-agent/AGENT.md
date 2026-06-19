@@ -38,7 +38,7 @@ The agent enforces the following hard constraints that no configuration, human o
 |---|---|
 | Capability status decisions | The agent makes no capability status decisions. Every status determination comes from `knowledge/ethana/canonical-product-model.md` via the skills. |
 | Canonical model override | No agent logic, operator instruction, or approval decision may override `canonical-product-model.md` |
-| Claims Firewall | Any Claims Firewall violation detected by `claims_linter.py` after any skill halts the agent in a `HALTED_FIREWALL_BREACH_*` state. There is no threshold — one violation halts the run. |
+| Claims Firewall | Any Claims Firewall violation detected by `claims_linter.py` after any skill halts the agent in `HALTED_FIREWALL_BREACH` (Gates 2c, 3b, 4b, 5b) or `HALTED_FIREWALL_BREACH_TERMINAL` (Gate 6b). There is no threshold — one violation halts the run. |
 | Proposal Review Gate | The ethana-proposal-review skill is the terminal gate. No Executive Assessment Package may be assembled or delivered before the proposal review passes. |
 | Capability Validation Gate | The ethana-capability-validation skill must execute and pass before the proposal review. No Claims Firewall check substitutes for capability validation. |
 | Skill sequence | Skills execute in the order defined in Section 5. No skill may be skipped, reordered, or run in parallel. |
@@ -445,7 +445,7 @@ Eight automated gates enforce output quality across the six-skill chain. All gat
 | Gate 6b — PR Firewall | Skill 6 | `claims_linter.py` | 0 violations | ✅ terminal |
 | Gate 6c — PR Release | Skill 6 | proposal review rubric | PCS ≥ 80, CTCS ≥ 80 | — |
 
-**Claims Firewall violations are the hardest fail.** A `HALTED_FIREWALL_BREACH_TERMINAL` (at Gate 6b) is irrecoverable without Compliance Director sign-off and a full new run. All other firewall breach states (`_GCM`, `_SOLUTION`, `_ISO`, `_CAPVAL`) have the same characteristic — no in-run recovery.
+**Claims Firewall violations are the hardest fail.** A `HALTED_FIREWALL_BREACH_TERMINAL` (at Gate 6b) is irrecoverable without Compliance Director sign-off and a full new run. `HALTED_FIREWALL_BREACH` (Gates 2c, 3b, 4b, 5b) shares the same characteristic — no in-run recovery; new run required. The audit log `trigger` field identifies which gate caused the breach.
 
 ---
 
@@ -569,22 +569,22 @@ The agent must not retain:
 | Skill 1 score < 55 | `HALTED_GATE_1_SCORE_INSUFFICIENT` | Escalate; do not auto-retry |
 | AG-1 rejected | `HALTED_APPROVAL_1_REJECTED` | Operator initiates revised run |
 | Skill 2 schema (post-retry) | `HALTED_GATE_2_SCHEMA` | Escalate to Compliance Analyst |
-| Skill 2 Claims Firewall | `HALTED_FIREWALL_BREACH_GCM` | Auto-route to Compliance Director; no auto-retry |
+| Skill 2 Claims Firewall | `HALTED_FIREWALL_BREACH` | Auto-route to Compliance Director; no auto-retry |
 | Skill 2 score 70–84 | `HALTED_GATE_2_SCORE_BELOW_THRESHOLD` | Revision request |
 | Skill 2 score < 70 | `HALTED_GATE_2_SCORE_INSUFFICIENT` | Escalate |
 | Skill 3 schema (post-retry) | `HALTED_GATE_3_SCHEMA` | Escalate |
-| Skill 3 Claims Firewall | `HALTED_FIREWALL_BREACH_SOLUTION` | Auto-route to Compliance Director; no auto-retry |
+| Skill 3 Claims Firewall | `HALTED_FIREWALL_BREACH` | Auto-route to Compliance Director; no auto-retry |
 | Skill 3 score < 70 | `HALTED_GATE_3_SCORE_INSUFFICIENT` | Escalate |
 | AG-2 one approved | `HALTED_APPROVAL_2_PARTIAL` | Conflict resolution |
 | AG-2 rejected | `HALTED_APPROVAL_2_REJECTED` | Operator initiates revised run |
 | Skill 4 schema (post-retry) | `HALTED_GATE_4_SCHEMA` | Escalate |
-| Skill 4 Claims Firewall | `HALTED_FIREWALL_BREACH_ISO` | Auto-route to Compliance Director |
+| Skill 4 Claims Firewall | `HALTED_FIREWALL_BREACH` | Auto-route to Compliance Director |
 | Skill 4 score 70–84 | `HALTED_GATE_4_SCORE_BELOW_THRESHOLD` | Revision request |
 | Skill 4 score < 70 | `HALTED_GATE_4_SCORE_INSUFFICIENT` | Escalate |
 | AG-3 rejected | `HALTED_APPROVAL_3_REJECTED` | Operator initiates revised run |
 | AG-3 partial | `HALTED_APPROVAL_3_PARTIAL` | Conflict resolution |
 | Skill 5 schema (post-retry) | `HALTED_GATE_5_SCHEMA` | Escalate |
-| Skill 5 Claims Firewall | `HALTED_FIREWALL_BREACH_CAPVAL` | Auto-route to Compliance Director |
+| Skill 5 Claims Firewall | `HALTED_FIREWALL_BREACH` | Auto-route to Compliance Director |
 | Skill 5 score < 90 | `HALTED_GATE_5_SCORE_INSUFFICIENT` | Escalate (ECS/CPL failure is always escalated; no auto-retry) |
 | Skill 6 schema (post-retry) | `HALTED_GATE_6_SCHEMA` | Escalate |
 | Skill 6 Claims Firewall | `HALTED_FIREWALL_BREACH_TERMINAL` | Auto-route to Compliance Director; hardest fail |

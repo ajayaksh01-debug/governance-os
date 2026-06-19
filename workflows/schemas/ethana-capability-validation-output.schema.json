@@ -258,6 +258,15 @@
     "requesting_team": {
       "type": "string",
       "description": "Team that requested the validation (e.g., 'Advisory', 'Sales', 'Technical', 'Marketing')."
+    },
+    "markdown_output": {
+      "type": "string",
+      "description": "Rendered capability-validation report (Client Assessment envelope). Consumed by the Claims Firewall (Gate 5b) and the output package builder."
+    },
+    "all_capability_results": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "Per-capability validation results when multiple capabilities are validated in one Skill 5 run (Client Assessment aggregation detail). The top-level fields carry the worst-case result that governs the gate."
     }
   },
   "additionalProperties": false,

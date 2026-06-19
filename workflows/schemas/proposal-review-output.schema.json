@@ -112,6 +112,15 @@
       "type": "array",
       "items": { "type": "string" },
       "description": "List of MRF IDs (e.g. ['MRF-001']) from Section 9."
+    },
+    "release_classification": {
+      "type": "string",
+      "enum": ["Approved", "Conditional", "Rejected"],
+      "description": "Client Assessment normalized release classification, mapped from the four-value 'classification' field (Approved->Approved; Approved with Revisions / Conditional Release -> Conditional; Rejected -> Rejected). Drives the CA Gate 6c routing."
+    },
+    "markdown_output": {
+      "type": "string",
+      "description": "Rendered proposal-review report (Client Assessment envelope). Sourced from the review markdown; consumed by the Claims Firewall (Gate 6b) and the output package builder."
     }
   },
   "additionalProperties": false

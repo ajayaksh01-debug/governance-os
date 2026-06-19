@@ -1,7 +1,7 @@
 # Client Assessment Agent — State Machine
 
 **Version:** 1.0-spec  
-**Total states:** 32 active + 31 halted = 63 states  
+**Total states:** 31 active + 28 halted = 59 states  
 **Approval gates:** 4 (AG-1 through AG-4)  
 **Claims Firewall enforced in:** Gate 2c, Gate 3b, Gate 4b, Gate 5b, Gate 6b  
 **Terminal states (success):** `COMPLETE`  
@@ -199,7 +199,7 @@
 | State | Entered from | Recovery |
 |---|---|---|
 | `HALTED_GATE_2_SCHEMA` | `SKILL_2_COMPLETE` (schema fails after 1 retry) | Escalate to Compliance Analyst |
-| `HALTED_FIREWALL_BREACH_GCM` | `SKILL_2_COMPLETE` (Gate 2c: any violation in Section 10) | Auto-route to Compliance Director; no auto-retry; new run |
+| `HALTED_FIREWALL_BREACH` | `SKILL_2_COMPLETE` (Gate 2c: any violation in Section 10) | Auto-route to Compliance Director; no auto-retry; new run. Audit log `trigger` field identifies the breaching gate (Gate 2c, 3b, 4b, or 5b) |
 | `HALTED_GATE_2_SCORE_BELOW_THRESHOLD` | `SKILL_2_COMPLETE` (score 70–84) | Revision request with per-section breakdown; new run |
 | `HALTED_GATE_2_SCORE_INSUFFICIENT` | `SKILL_2_COMPLETE` (score < 70) | Escalate to Compliance Analyst |
 
@@ -208,7 +208,7 @@
 | State | Entered from | Recovery |
 |---|---|---|
 | `HALTED_GATE_3_SCHEMA` | `SKILL_3_COMPLETE` (schema fails after 1 retry) | Escalate to Compliance Analyst |
-| `HALTED_FIREWALL_BREACH_SOLUTION` | `SKILL_3_COMPLETE` (Gate 3b: any violation) | Auto-route to Compliance Director; no auto-retry; new run |
+| `HALTED_FIREWALL_BREACH` | `SKILL_3_COMPLETE` (Gate 3b: any violation) | Auto-route to Compliance Director; no auto-retry; new run |
 | `HALTED_GATE_3_SCORE_INSUFFICIENT` | `SKILL_3_COMPLETE` (score < 70) | Escalate to Compliance Analyst |
 | `HALTED_APPROVAL_2_PARTIAL` | `APPROVAL_2_PENDING` (DPO approves, CISO rejects or vice versa) | Conflict resolution meeting; new run |
 | `HALTED_APPROVAL_2_REJECTED` | `APPROVAL_2_PENDING` (both DPO and CISO reject) | Operator initiates revised run |
@@ -218,7 +218,7 @@
 | State | Entered from | Recovery |
 |---|---|---|
 | `HALTED_GATE_4_SCHEMA` | `SKILL_4_COMPLETE` (schema fails after 1 retry) | Escalate to Compliance Analyst |
-| `HALTED_FIREWALL_BREACH_ISO` | `SKILL_4_COMPLETE` (Gate 4b: any violation in Section 8) | Auto-route to Compliance Director; no auto-retry; new run |
+| `HALTED_FIREWALL_BREACH` | `SKILL_4_COMPLETE` (Gate 4b: any violation in Section 8) | Auto-route to Compliance Director; no auto-retry; new run |
 | `HALTED_GATE_4_SCORE_BELOW_THRESHOLD` | `SKILL_4_COMPLETE` (AMS or ARS score 70–84) | Revision request with per-clause breakdown; new run |
 | `HALTED_GATE_4_SCORE_INSUFFICIENT` | `SKILL_4_COMPLETE` (AMS or ARS score < 70) | Escalate to Compliance Analyst |
 | `HALTED_APPROVAL_3_REJECTED` | `APPROVAL_3_PENDING` (Client Risk Committee Lead rejects) | Operator initiates revised run |
@@ -229,7 +229,7 @@
 | State | Entered from | Recovery |
 |---|---|---|
 | `HALTED_GATE_5_SCHEMA` | `SKILL_5_COMPLETE` (any per-capability schema fails after 1 retry) | Escalate to Compliance Analyst |
-| `HALTED_FIREWALL_BREACH_CAPVAL` | `SKILL_5_COMPLETE` (Gate 5b: any violation in validation report) | Auto-route to Compliance Director; no auto-retry; new run |
+| `HALTED_FIREWALL_BREACH` | `SKILL_5_COMPLETE` (Gate 5b: any violation in validation report) | Auto-route to Compliance Director; no auto-retry; new run |
 | `HALTED_GATE_5_SCORE_INSUFFICIENT` | `SKILL_5_COMPLETE` (ECS < 90 or escalation_required == true) | Escalate to Compliance Director + Product team; no auto-retry |
 
 #### Skill 6 (ethana-proposal-review)
@@ -312,7 +312,7 @@
 | From | Event | To |
 |---|---|---|
 | `SKILL_2_COMPLETE` | Gate 2b schema fails → 1 retry → still fails | `HALTED_GATE_2_SCHEMA` |
-| `SKILL_2_COMPLETE` | Gate 2c Claims Firewall violation | `HALTED_FIREWALL_BREACH_GCM` |
+| `SKILL_2_COMPLETE` | Gate 2c Claims Firewall violation | `HALTED_FIREWALL_BREACH` |
 | `SKILL_2_COMPLETE` | Gate 2d score 70–84 | `HALTED_GATE_2_SCORE_BELOW_THRESHOLD` |
 | `SKILL_2_COMPLETE` | Gate 2d score < 70 | `HALTED_GATE_2_SCORE_INSUFFICIENT` |
 
@@ -321,7 +321,7 @@
 | From | Event | To |
 |---|---|---|
 | `SKILL_3_COMPLETE` | Gate 3a schema fails → 1 retry → still fails | `HALTED_GATE_3_SCHEMA` |
-| `SKILL_3_COMPLETE` | Gate 3b Claims Firewall violation | `HALTED_FIREWALL_BREACH_SOLUTION` |
+| `SKILL_3_COMPLETE` | Gate 3b Claims Firewall violation | `HALTED_FIREWALL_BREACH` |
 | `SKILL_3_COMPLETE` | Gate 3c score < 70 | `HALTED_GATE_3_SCORE_INSUFFICIENT` |
 | `APPROVAL_2_PENDING` | DPO approves but CISO rejects (or vice versa) | `HALTED_APPROVAL_2_PARTIAL` |
 | `APPROVAL_2_PENDING` | Both DPO and CISO reject | `HALTED_APPROVAL_2_REJECTED` |
@@ -331,7 +331,7 @@
 | From | Event | To |
 |---|---|---|
 | `SKILL_4_COMPLETE` | Gate 4a schema fails → 1 retry → still fails | `HALTED_GATE_4_SCHEMA` |
-| `SKILL_4_COMPLETE` | Gate 4b Claims Firewall violation | `HALTED_FIREWALL_BREACH_ISO` |
+| `SKILL_4_COMPLETE` | Gate 4b Claims Firewall violation | `HALTED_FIREWALL_BREACH` |
 | `SKILL_4_COMPLETE` | Gate 4c AMS or ARS 70–84 | `HALTED_GATE_4_SCORE_BELOW_THRESHOLD` |
 | `SKILL_4_COMPLETE` | Gate 4c AMS or ARS < 70 | `HALTED_GATE_4_SCORE_INSUFFICIENT` |
 | `APPROVAL_3_PENDING` | Client Risk Committee Lead rejects | `HALTED_APPROVAL_3_REJECTED` |
@@ -342,7 +342,7 @@
 | From | Event | To |
 |---|---|---|
 | `SKILL_5_COMPLETE` | Gate 5a schema fails → 1 retry → still fails | `HALTED_GATE_5_SCHEMA` |
-| `SKILL_5_COMPLETE` | Gate 5b Claims Firewall violation | `HALTED_FIREWALL_BREACH_CAPVAL` |
+| `SKILL_5_COMPLETE` | Gate 5b Claims Firewall violation | `HALTED_FIREWALL_BREACH` |
 | `SKILL_5_COMPLETE` | Gate 5c: any capability ECS < 90 or escalation_required == true | `HALTED_GATE_5_SCORE_INSUFFICIENT` |
 
 #### Skill 6 Failures
@@ -442,7 +442,7 @@ The following transitions are explicitly prohibited regardless of operator instr
 
 | Forbidden from | Forbidden to | Reason |
 |---|---|---|
-| Any `HALTED_FIREWALL_BREACH_*` | Any active or `GATE_N_PASSED` state | Claims Firewall breaches have no in-run recovery; require new run |
+| `HALTED_FIREWALL_BREACH` | Any active or `GATE_N_PASSED` state | Claims Firewall breach (Gates 2c, 3b, 4b, 5b) has no in-run recovery; requires new run |
 | `HALTED_FIREWALL_BREACH_TERMINAL` | Any state except archived | Terminal firewall breach; hardest fail; Compliance Director sign-off required for any subsequent run |
 | Any `GATE_N_PASSED` | Any `SKILL_M_RUNNING` where M < N | Skills cannot run out of sequence |
 | `SKILL_N_RUNNING` | `SKILL_N+1_RUNNING` | A skill cannot hand off to the next without entering `SKILL_N_COMPLETE` |
@@ -466,7 +466,8 @@ SKILL_N_COMPLETE
       │     └── pass
       │           │
       │           ├── Gate Nb (Claims Firewall, where applicable): evaluate second
-      │           │     ├── fail → HALTED_FIREWALL_BREACH_N
+      │           │     ├── fail → HALTED_FIREWALL_BREACH        (Skills 2, 3, 4, 5)
+      │           │     │          HALTED_FIREWALL_BREACH_TERMINAL (Skill 6 — Gate 6b)
       │           │     └── pass
       │           │           │
       │           │           └── Gate Nc (score): evaluate third
@@ -508,7 +509,7 @@ The following states do NOT need to survive process restarts:
 When the Claims Firewall gate (Nb) fires concurrently with the schema gate:
 
 - Schema failures → `HALTED_GATE_N_SCHEMA` takes precedence
-- Claims Firewall violations detected after schema passes → `HALTED_FIREWALL_BREACH_N`
+- Claims Firewall violations detected after schema passes → `HALTED_FIREWALL_BREACH` (Gates 2c, 3b, 4b, 5b) or `HALTED_FIREWALL_BREACH_TERMINAL` (Gate 6b)
 - A document that fails both schema and firewall → HALTED at schema; firewall status recorded in log (but schema fix must come first)
 
 The HALTED state naming convention encodes which check caused the halt. The run log always records ALL gate results (schema status + firewall report + score) for the failed skill, even when only one gate is the primary halt trigger.

@@ -1,0 +1,51 @@
+# Client Assessment Agent Runtime Configuration
+# Version: 0.1
+
+directories:
+  runs: "agents/client-assessment-agent/runtime/runs"
+  packages: "agents/client-assessment-agent/runtime/packages"
+  logs: "agents/client-assessment-agent/runtime/logs"
+
+# Score thresholds per skill (as documented in evaluation.md Gate Summary)
+thresholds:
+  skill_1_pass: 70
+  skill_1_preliminary: 55
+  skill_2_pass: 85
+  skill_2_below_threshold: 70
+  skill_3_pass: 70
+  skill_4_pass: 85
+  skill_4_below_threshold: 70
+  skill_5_pass: 90
+  skill_6_pcs_pass: 80
+  skill_6_ctcs_pass: 80
+
+# Approval gate roles
+approval_gates:
+  ag1:
+    role: "General Counsel"
+    timeout_business_days: 5
+    joint: false
+  ag2:
+    roles: ["DPO", "CISO"]
+    timeout_business_days: 5
+    joint: true
+  ag3:
+    role: "Client Risk Committee Lead"
+    timeout_business_days: 5
+    joint: false
+  ag4:
+    roles: ["Compliance Director", "Sales Director"]
+    timeout_business_days: 3
+    joint: true
+
+supported_jurisdictions:
+  - EU
+  - UK
+  - India
+
+supported_trigger_types:
+  - new_client_onboarding
+  - annual_governance_audit
+  - certification_readiness_check
+  - regulatory_change_impact
+  - pre_proposal_assessment

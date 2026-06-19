@@ -107,6 +107,16 @@
       "type": "integer",
       "minimum": 0,
       "description": "Count of Claims Firewall violations found in Section 8.5. Any value > 0 triggers HD2 on the assessment output."
+    },
+    "quality_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Assessment-quality gate score (Client Assessment envelope). Measures how complete the assessment inputs and analysis were — NOT client maturity. Read by the Client Assessment runtime's Skill 4 score gate; decoupled from AMS/ARS."
+    },
+    "markdown_output": {
+      "type": "string",
+      "description": "Rendered ISO 42001 gap-assessment report (Client Assessment envelope). Consumed by the Claims Firewall (Gate 4b, Section 8.5) and the output package builder."
     }
   },
   "additionalProperties": false

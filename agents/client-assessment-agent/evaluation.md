@@ -71,7 +71,7 @@ For skill-level rubrics, refer to:
 - **Schema:** `workflow_validator.py` validates GCM JSON output against `control_mapping_output.json`.
 - **Firewall:** `claims_linter.py` checks GCM configuration files for unauthorized claims.
 - **Threshold:** 0 validation errors, 0 firewall violations.
-- **Failure state:** `HALTED_FIREWALL_BREACH_GCM` (for firewall) or `HALTED_GATE_2B_SCHEMA` (for schema).
+- **Failure state:** `HALTED_FIREWALL_BREACH` (for firewall) or `HALTED_GATE_2B_SCHEMA` (for schema).
 
 ### Gate 2d — GCM Quality Score
 - **Threshold:** Score ≥ 85/100 against GCM rubric.
@@ -81,7 +81,7 @@ For skill-level rubrics, refer to:
 - **Schema:** `workflow_validator.py` validates SM JSON output against `solution_mapping_output.json`.
 - **Firewall:** `claims_linter.py` checks SM proposal text for unreleased features.
 - **Threshold:** 0 validation errors, 0 firewall violations.
-- **Failure state:** `HALTED_FIREWALL_BREACH_SM`.
+- **Failure state:** `HALTED_FIREWALL_BREACH`.
 
 ### Gate 3c — SM Quality Score
 - **Threshold:** Score ≥ 70/100 against SM rubric.
