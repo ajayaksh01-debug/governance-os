@@ -27,11 +27,6 @@ from schema_validator import SchemaValidator
 from output_builder import OutputBuilder
 from skill_executor import SkillExecutor
 
-try:
-    import claims_linter
-except ImportError:
-    print("Warning: claims_linter script could not be imported.")
-
 class Orchestrator:
     def __init__(self, config_path: str = None):
         """Initializes the orchestrator and loads configurations."""

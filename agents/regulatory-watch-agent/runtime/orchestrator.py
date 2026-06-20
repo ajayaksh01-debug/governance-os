@@ -254,6 +254,7 @@ class Orchestrator:
                 for ln, line, msg in firewall_violations:
                     firewall_errors.append(f"Line {ln}: {msg}")
         except Exception as e:
+            firewall_errors.append(f"Claims Firewall linter unavailable: {e}")
             logger.log("GATE_1_FIREWALL", "ERROR", f"Could not run Claims Firewall linter: {e}")
         finally:
             if temp_md_path.exists():
@@ -452,6 +453,7 @@ class Orchestrator:
                 for ln, line, msg in firewall_violations:
                     firewall_errors.append(f"Line {ln}: {msg}")
         except Exception as e:
+            firewall_errors.append(f"Claims Firewall linter unavailable: {e}")
             logger.log("GATE_3B_FIREWALL", "ERROR", f"Could not run Claims Firewall linter: {e}")
         finally:
             if temp_md_path.exists():
@@ -557,6 +559,7 @@ class Orchestrator:
                     for ln, line, msg in firewall_violations:
                         firewall_errors.append(f"Line {ln}: {msg}")
             except Exception as e:
+                firewall_errors.append(f"Claims Firewall linter unavailable: {e}")
                 logger.log("RE_GATE_VAL", "ERROR", f"Could not run claims linter: {e}")
             finally:
                 if temp_md_path.exists():

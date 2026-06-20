@@ -648,6 +648,34 @@ class TestSkillFMGates(CARuntime):
 
 
 # ---------------------------------------------------------------------------
+# Firewall fail-closed enforcement (PR-005)
+# ---------------------------------------------------------------------------
+
+class TestFirewallFailClosed(CARuntime):
+    """Prove that the firewall halts (fail-closed) when the linter cannot execute."""
+
+    def test_empty_markdown_output_fails_closed(self):
+        """Skill output with no markdown_output halts at the firewall gate."""
+        s2_no_md = {k: v for k, v in S2_FIXTURE.items() if k != "markdown_output"}
+        self._wire_skills(s1=S1_FIXTURE, s2=s2_no_md)
+        tid = self.orch.start_run("new_client_onboarding", VALID_INPUTS)
+        self._approve_ag1(tid)
+        self.assertEqual(self._status(tid), "HALTED_FIREWALL_BREACH")
+
+    def test_import_error_fails_closed(self):
+        """ImportError during claims_linter load halts at the firewall gate."""
+        import sys
+        from unittest.mock import patch
+        self._wire_skills(s1=S1_FIXTURE, s2=S2_FIXTURE)
+        tid = self.orch.start_run("new_client_onboarding", VALID_INPUTS)
+        # Skill 2 (and Gate 2c firewall) fires on AG-1 approval.
+        # Mask claims_linter so the import inside _run_firewall_check fails.
+        with patch.dict(sys.modules, {"claims_linter": None}):
+            self._approve_ag1(tid)
+        self.assertEqual(self._status(tid), "HALTED_FIREWALL_BREACH")
+
+
+# ---------------------------------------------------------------------------
 # Skill 6 and AG-4 tests
 # ---------------------------------------------------------------------------
 

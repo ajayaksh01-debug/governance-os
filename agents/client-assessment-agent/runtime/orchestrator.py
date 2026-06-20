@@ -735,12 +735,16 @@ class Orchestrator:
             return False
 
         if not md_content:
+            state_mgr.transition_to(
+                breach_state,
+                f"Gate {gate_label}: empty markdown content; firewall cannot execute.",
+            )
             logger.log(
                 f"GATE_{gate_label}_FIREWALL",
-                "WARNING",
-                "No MD content to check; firewall gate passed with warning.",
+                "ERROR",
+                "Empty markdown content; firewall gate halted (fail-closed).",
             )
-            return True
+            return False
 
         tmp_path = None
         try:
@@ -781,12 +785,16 @@ class Orchestrator:
             return True
 
         except ImportError:
+            state_mgr.transition_to(
+                breach_state,
+                f"Gate {gate_label}: claims_linter unavailable; firewall cannot execute.",
+            )
             logger.log(
                 f"GATE_{gate_label}_FIREWALL",
-                "WARNING",
-                "claims_linter not available; firewall gate passed with warning.",
+                "ERROR",
+                "claims_linter unavailable; firewall gate halted (fail-closed).",
             )
-            return True
+            return False
         finally:
             if tmp_path and os.path.exists(tmp_path):
                 os.unlink(tmp_path)
