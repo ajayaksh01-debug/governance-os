@@ -15,15 +15,10 @@ import shutil
 import unittest
 from pathlib import Path
 
-# Setup paths to import orchestrator, state manager, claims linter
 repo_root = Path(__file__).resolve().parents[2]
-sys.path.append(str(repo_root / "agents" / "regulatory-watch-agent" / "runtime"))
 sys.path.append(str(repo_root / "evaluations" / "scripts"))
 
 import claims_linter
-from orchestrator import Orchestrator
-from state_manager import StateManager
-from audit_logger import AuditLogger
 
 class TestClaimsLinterFinalVerification(unittest.TestCase):
     def setUp(self):
@@ -108,7 +103,35 @@ class TestClaimsLinterFinalVerification(unittest.TestCase):
         self.assertEqual(len(guardrails_violations), 0, f"Plain English 'guardrails' triggered false positive: {guardrails_violations}")
 
 
+def _load_rwa_classes():
+    import sys as _sys, importlib.util
+    _rwa = repo_root / "agents" / "regulatory-watch-agent" / "runtime"
+    _rwa_str = str(_rwa)
+    if _rwa_str not in _sys.path:
+        _sys.path.insert(0, _rwa_str)
+    for _k in ("orchestrator", "state_manager", "audit_logger", "schema_validator",
+               "output_builder", "skill_executor"):
+        _sys.modules.pop(_k, None)
+    for _alias, _file in [
+        ("_rwa_audit_logger", "audit_logger.py"),
+        ("_rwa_state_manager", "state_manager.py"),
+        ("_rwa_orchestrator", "orchestrator.py"),
+    ]:
+        _spec = importlib.util.spec_from_file_location(_alias, _rwa / _file)
+        _mod = importlib.util.module_from_spec(_spec)
+        _sys.modules[_alias] = _mod
+        _spec.loader.exec_module(_mod)
+    _m = _sys.modules[__name__]
+    _m.Orchestrator = _sys.modules["_rwa_orchestrator"].Orchestrator
+    _m.StateManager = _sys.modules["_rwa_state_manager"].StateManager
+    _m.AuditLogger = _sys.modules["_rwa_audit_logger"].AuditLogger
+
+
 class TestApprovalModificationBypass(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        _load_rwa_classes()
+
     def setUp(self):
         self.config_path = str(repo_root / "agents" / "regulatory-watch-agent" / "runtime" / "config.yaml")
         self.orchestrator = Orchestrator(self.config_path)
@@ -152,6 +175,10 @@ class TestApprovalModificationBypass(unittest.TestCase):
 
 
 class TestSkill1FirewallBypass(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        _load_rwa_classes()
+
     def setUp(self):
         self.config_path = str(repo_root / "agents" / "regulatory-watch-agent" / "runtime" / "config.yaml")
         self.orchestrator = Orchestrator(self.config_path)

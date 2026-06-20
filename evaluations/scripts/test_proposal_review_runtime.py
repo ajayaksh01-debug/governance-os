@@ -10,17 +10,26 @@ import shutil
 import unittest
 from pathlib import Path
 
-# Setup paths to import orchestrator, state manager
 repo_root = Path(__file__).resolve().parents[2]
-sys.path.append(str(repo_root))
-sys.path.append(str(repo_root / "agents" / "ethana_proposal_agent" / "runtime"))
-sys.path.append(str(repo_root / "evaluations" / "scripts"))
 
-from orchestrator import Orchestrator
-from state_manager import StateManager
-from audit_logger import AuditLogger
 
 class TestProposalReviewRuntime(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        import sys as _sys
+        _rt = str(repo_root / "agents" / "ethana_proposal_agent" / "runtime")
+        if _rt not in _sys.path:
+            _sys.path.insert(0, _rt)
+        for _k in ("orchestrator", "state_manager", "audit_logger", "schema_validator",
+                   "output_builder", "skill_executor"):
+            _sys.modules.pop(_k, None)
+        from agents.ethana_proposal_agent.runtime.orchestrator import Orchestrator
+        from agents.ethana_proposal_agent.runtime.state_manager import StateManager
+        from agents.ethana_proposal_agent.runtime.audit_logger import AuditLogger
+        _m = _sys.modules[__name__]
+        _m.Orchestrator = Orchestrator
+        _m.StateManager = StateManager
+        _m.AuditLogger = AuditLogger
     def setUp(self):
         self.config_path = str(repo_root / "agents" / "ethana_proposal_agent" / "runtime" / "config.yaml")
         self.orchestrator = Orchestrator(self.config_path)
