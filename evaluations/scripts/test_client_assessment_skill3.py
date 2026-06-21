@@ -149,9 +149,9 @@ class TestSkill3Aggregation(Skill3Base):
         out = self._run([PROD_FULL, PROD_PARTIAL, CURSORY])
         dist = out["overall_coverage_summary"]["ccs_distribution"]
         self.assertEqual(sum(dist.values()), 3)
-        self.assertEqual(dist["full"], 1)
-        self.assertEqual(dist["partial"], 1)
-        self.assertEqual(dist["none"], 1)
+        self.assertEqual(dist["Full"], 1)
+        self.assertEqual(dist["Partial"], 1)
+        self.assertEqual(dist["None"], 1)
 
 
 # ---------------------------------------------------------------------------

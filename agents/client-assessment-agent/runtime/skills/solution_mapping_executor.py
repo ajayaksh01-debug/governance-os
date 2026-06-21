@@ -155,14 +155,14 @@ class SolutionMappingExecutor:
     @staticmethod
     def _band_of(ccs: int) -> str:
         if ccs >= 90:
-            return "full"
+            return "Full"
         if ccs >= 70:
-            return "high"
+            return "High"
         if ccs >= 50:
-            return "partial"
+            return "Partial"
         if ccs >= 25:
-            return "thin"
-        return "none"
+            return "Thin"
+        return "None"
 
     def _commercial_motion(self, production_coverage_percent: int,
                            has_cert_blocker: bool, has_in_build: bool) -> str:
@@ -207,7 +207,7 @@ class SolutionMappingExecutor:
         )
         production_coverage_percent = round(100 * production_covered / total) if total else 0
 
-        ccs_distribution = {"full": 0, "high": 0, "partial": 0, "thin": 0, "none": 0}
+        ccs_distribution = {"Full": 0, "High": 0, "Partial": 0, "Thin": 0, "None": 0}
         for m in matched:
             ccs_distribution[self._band_of(m["ccs_score"])] += 1
 

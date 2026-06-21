@@ -300,12 +300,11 @@ The ethana-proposal-review skill lists `feature_mapping_output` as a required in
 
 ### 6.1 Relationship to governance-assessment-workflow.md
 
-`workflows/governance-assessment-workflow.md` describes a 4-skill chain (RM → ISO → GCM → CapVal). The Client Assessment Agent implements a 6-skill chain that differs in:
-- **Order:** RM → GCM → solution-mapping → ISO → CapVal → proposal-review (rationale: GCM must precede ISO to provide control_mapping_output as ISO input; solution-mapping must precede ISO to give the full platform coverage picture)
-- **Additional skills:** ethana-solution-mapping and ethana-proposal-review are added
-- **Additional approval gates:** 4 human gates (workflow.md defines 2)
+`workflows/governance-assessment-workflow.md` documents the canonical 6-skill chain (updated PR-009). Key ordering rationale:
+- **Order:** RM → GCM → solution-mapping → ISO → CapVal → FM → proposal-review (GCM precedes ISO to supply `control_mapping_output`; solution-mapping precedes ISO to provide the full platform coverage picture)
+- **Approval gates:** 4 human gates (AG-1 through AG-4)
 
-The Client Assessment Agent specification supersedes the governance-assessment-workflow.md description. The workflow file should be updated to reflect the 6-skill chain before implementation begins (see Section 14, Blocker B-06).
+This specification and the workflow document are now consistent.
 
 ### 6.2 Handoff From Regulatory Watch Agent
 
@@ -698,12 +697,12 @@ If the run halts after an approval gate has been passed, the approved artifacts 
 
 | ID | Blocker | Severity | What it blocks |
 |---|---|---|---|
-| B-01 | `scorecard_compiler.py` is a stub — not implemented | **Critical** | `{traceability_id}-client-scorecard.json` cannot be produced; Executive Assessment Package is incomplete |
+| B-01 | `scorecard_compiler.py` exists (`evaluations/scripts/scorecard_compiler.py`, 181 lines) but is not wired into CA `ASSEMBLING_PACKAGE` | **Critical** | `{traceability_id}-client-scorecard.json` cannot be produced; Executive Assessment Package is incomplete. Integration is PR-011. |
 | B-02 | `evaluations/baselines/ethana-solution-mapping/` missing entirely | **Critical** | Certifier cannot reach L3; regression testing for Skill 3 output is impossible; Gate 3c score has no structural reference |
 | B-03 | `evaluations/test-cases/ethana-solution-mapping/` missing entirely | **Critical** | Level 4A cannot be achieved; no fixtures for Skill 3 dry-run |
-| B-04 | Certifier Bug 1: checks for `"proposal-review"` skill but directory is `"ethana-proposal-review"` | **High** | Agent reports L0 for Ethana Proposal Agent; affects shared certifier infrastructure |
-| B-05 | Certifier baseline format bug: flat `.md` baselines invisible to certifier | **High** | ISO 42001, cap-val, and proposal-review baselines invisible; agent certifier under-reports true readiness |
-| B-06 | `workflows/governance-assessment-workflow.md` defines a 4-skill chain; agent implements 6 skills | **Medium** | Workflow document is stale relative to agent specification; should be updated before implementation to avoid confusion |
+| ~~B-04~~ | ~~Certifier Bug 1: checks for `"proposal-review"` skill but directory is `"ethana-proposal-review"`~~ | ~~**High**~~ | **Resolved (pre-PR-009):** `agent_certifier.py:30` already lists `"ethana-proposal-review"`. |
+| ~~B-05~~ | ~~Certifier baseline format bug: flat `.md` baselines invisible to certifier~~ | ~~**High**~~ | **Resolved (pre-PR-009):** `agent_certifier.py:70–82` checks both directory and flat `{skill}-baseline.md` formats. |
+| ~~B-06~~ | ~~`workflows/governance-assessment-workflow.md` defines a 4-skill chain; agent implements 6 skills~~ | ~~**Medium**~~ | **Resolved (PR-009):** `governance-assessment-workflow.md` updated to canonical 6-skill chain. |
 
 ### Required Before L4A
 
@@ -711,11 +710,11 @@ If the run halts after an approval gate has been passed, the approved artifacts 
 |---|---|---|
 | Create `evaluations/baselines/ethana-solution-mapping/structure.json` | ❌ Missing | P1 |
 | Create `evaluations/test-cases/ethana-solution-mapping/` with ≥ 3 fixtures | ❌ Missing | P1 |
-| Create `evaluations/test-cases/regulatory-subjects/minimal-risk-internal-tool.md` | ❌ Missing | P1 (noted in Regulatory Watch Agent AGENT.md) |
-| Implement `scorecard_compiler.py` | ❌ Stub | P1 |
-| Update `governance-assessment-workflow.md` to 6-skill chain | ⚠️ Stale | P2 |
-| Fix certifier Bug 1 (skill name mismatch) | ⚠️ Bug | P2 |
-| Fix certifier baseline format detection | ⚠️ Bug | P2 |
+| Wire `scorecard_compiler.py` into CA `ASSEMBLING_PACKAGE` | ⚠️ Unwired (PR-011) | P1 |
+| ~~Create `evaluations/test-cases/regulatory-subjects/minimal-risk-internal-tool.md`~~ | ✅ Created (PR-008) | — |
+| ~~Update `governance-assessment-workflow.md` to 6-skill chain~~ | ✅ Done (PR-009) | — |
+| ~~Fix certifier Bug 1 (skill name mismatch)~~ | ✅ Already fixed | — |
+| ~~Fix certifier baseline format detection~~ | ✅ Already fixed | — |
 
 ### Items Ready (No Blockers)
 

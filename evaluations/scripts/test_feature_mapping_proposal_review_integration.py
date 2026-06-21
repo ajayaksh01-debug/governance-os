@@ -46,7 +46,14 @@ CONFORMANT_FMO = {
         }
     ],
     "overall_tfs_score": 78,
-    "production_tfs_score": 78
+    "production_tfs_score": 78,
+    "markdown_output": (
+        "## Feature Validation Table\n\n"
+        "| Proposed Feature | Canonical Capability | Integration Path | TFS | PoC |\n"
+        "|---|---|---|---|---|\n"
+        "| AI Risk Monitoring Dashboard | Risk Monitoring Dashboard | Native API Integration | 85 | Ready |\n"
+        "| Model Explainability Reports | Explainability Engine | Sidecar Service | 72 | Ready |\n"
+    ),
 }
 
 

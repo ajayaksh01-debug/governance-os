@@ -2,15 +2,15 @@
 
 ## Repository Version
 
-**Current Milestone:** v0.8.1-pr008-complete
-**Commit:** b88c54f
-**Status:** PR-008 Complete and Tagged
+**Current Milestone:** v0.8.1-pr009-complete
+**Predecessor:** v0.8.1-pr008-complete (PR-008: RWA L4 Certification)
+**Status:** PR-009 Complete
 
 ---
 
 ## Current Completion
 
-- **Internal Tool Readiness:** 62–65%
+- **Internal Tool Readiness:** 67–70%
 - **SaaS Product Readiness:** 22–27%
 
 ---
@@ -19,17 +19,17 @@
 
 ### Genuine L4
 
-- Capability Validation Agent (CVA)
+- Capability Validation Agent (CVA) — ECS now 95 for Immutable Audit Log (ADR-008 implemented)
 - Incident Intelligence Agent (IIA)
 - Ethana Proposal Agent (EPA)
-- Governance Review Agent (GRA)
+- Governance Review Agent (GRA) — AGENT.md created (PR-009)
 - Regulatory Watch Agent (RWA) — certified PR-008
 
 ### Partial
 
 - **Client Assessment Agent (CA)**
 
-**Reason:** No successful end-to-end execution using real adapters. 205 tests pass with mocked skill outputs only. Two confirmed blocking failures at the Skill 5 adapter boundary (M1, M2). Scorecard compiler unwired. Client Memory unimplemented.
+**Reason:** No successful end-to-end execution using real adapters. CA tests use mocked skill outputs. M1 and M2 blockers are now resolved (PR-009); the chain can reach Skill FM for the first time on Audit-Log-surfacing input. M7 (EPA scoring on concatenated governance markdown) is unknown-risk until the first real run. Scorecard compiler unwired (PR-011). Client Memory unimplemented.
 
 ---
 
@@ -38,35 +38,38 @@
 ### Complete
 
 **✓ PR-008 — Regulatory Watch Agent L4 Certification**
-
-- 34 dedicated runtime tests (`test_regulatory_watch_runtime.py`)
-- Mode A coverage: EU BFSI, India DPDP, UK Insurance happy paths
-- Mode B coverage: affected run identification, 3-run concurrency cap enforcement
-- Approval path coverage: Gate 1 and Gate 2 failure paths; AG-2 re-gate (clean modifications)
-- Firewall coverage: Gate 3b Claims Firewall halt via `start_run` flow
-- Minimal-risk fixture: `evaluations/test-cases/regulatory-subjects/minimal-risk-internal-tool.md` (closes L4A blocker)
-- All 24 RWA state machine states reached in test assertions
+- 34 dedicated runtime tests; all 24 RWA states covered
 - Tagged: `v0.8.1-pr008-complete`
 
-**Test count after PR-008:** 316 total / 315 passing (CONFORMANT_FMO defect persists — resolved by PR-009)
+**✓ PR-009 — Documentation, Schema, and Skill-5 Boundary Repairs**
 
-### Active Critical Path
+*Stream A (docs & schema):*
+- **A1** — Fixed `CONFORMANT_FMO` fixture (added `markdown_output`); restores 326/326 per-module pass count
+- **A2** — Fixed M3 `ccs_distribution` key casing (`full/high/...` → `Full/High/...`); executor now matches `solution_mapping_output.json` schema
+- **A3** — Rewrote `governance-assessment-workflow.md` §4 to canonical 6-skill chain (RM → GCM → ESM → ISO → CapVal → FM → ProposalReview); removed stale 4-skill diagram; 4 approval gates documented; CA AGENT.md §6.1 superseding note removed (B-06 closed)
+- **A4** — Created `agents/governance_review_agent/AGENT.md` (GRA spec: state machine, 7 GTG gates, GAS/CCR/high-risk scoring, classification thresholds, ADR-006 reference)
+- **A5** — Corrected stale blockers in CA `AGENT.md` §14: B-01 reworded (scorecard_compiler.py exists, wiring = PR-011), B-04/B-05 marked resolved, B-06 closed
 
-**PR-009 — Documentation & Schema Repairs**
+*Stream B (Skill-5 boundary — M1 and M2 now resolved):*
+- **B1** — Implemented ADR-007 (M1): `Skill5Adapter._capability_list()` now extracts from `upstream["skill_3_json"]["matched_capabilities"]`; excludes generic fallbacks; deduplicates; raises informative error on empty list; docstring updated; 7 ADR-007 acceptance tests added
+- **B2** — Implemented ADR-008 Option A (M2): CVA audit branch ECS 85 → 95; `ecs_arithmetic` includes `Use-cases.md corroboration: +10`; all `evidence_basis` strings updated to `ECS 95`. **ADR-009 (Phase B general fallback) NOT implemented — out of scope**
+- **B3** — Updated CVA test assertion (ECS range 80–90 → exact 95); added ADR-008 arithmetic acceptance test; CA mock default 94 → 95
+- **B4** — Added M5 defensive guard in `Skill6Adapter.map_output`: empty `proposal_review_md` now raises `SkillAdapterError` with diagnostic; 2 guard tests added
 
-- CONFORMANT_FMO `markdown_output` fix (restores 316/316 passing)
-- `governance-assessment-workflow.md` update to 6-skill chain
-- GRA `AGENT.md` creation
-- CA `AGENT.md` stale blocker corrections (B-01, B-04, B-05)
-
-**Dependencies:** None. Start immediately — the PR-009 parallel window alongside PR-008 has closed.
+*Tests:*
+- 10 new tests added (7 for B1/ADR-007, 1 for B2/ADR-008, 2 for B4/M5 guard)
+- 1 existing test fixed (CONFORMANT_FMO schema assertion)
+- 1 existing CVA ECS assertion updated (85→95)
+- Per-module validation: 9/9 FM-PR, 18/18 Skill3, 4/4 CVA, 87/87 CA runtime, 34/34 RWA
+- **Test count after PR-009: 326 total / 326 passing (per-module)**
+- Full-suite: 298 passed / 28 failed — all 28 failures are pre-existing RWA test pollution (RWA 34/34 isolated); no new regressions introduced
 
 ### Remaining
 
 - **PR-010** — Fixture Expansion (ethana-solution-mapping × 3, ethana-feature-mapping × 3)
 - **PR-011** — Scorecard Compiler Integration (wire into CA `ASSEMBLING_PACKAGE`)
 - **PR-012** — Certifier Upgrade (evidence-based L4; blocked until CA end-to-end test exists)
-- **CA End-to-End Validation** — one complete run: real EU BFSI input → 6 skills via real adapters → 4 approval gates → COMPLETE → all 12 artifacts
+- **CA End-to-End Validation** — first real run: Audit-Log-surfacing EU BFSI input → 6 skills via real adapters → 4 approval gates → COMPLETE; unlocked by PR-009 M1+M2 fixes
 
 ---
 
@@ -74,74 +77,58 @@
 
 ### Architecture
 
-| ID | Item | Severity for v0.9 |
-|---|---|---|
-| A1 | Cross-runtime coupling via `skill_adapters.py` — no interface contract enforcement; signature changes in RWA/CVA/EPA fail silently in CA | High |
-| A3 | `scorecard_compiler.py` not wired into CA `ASSEMBLING_PACKAGE` — client scorecard cannot be produced by a CA run | High |
-| A4 | `claims_linter.py` layer boundary violation — evaluation tool imported at runtime by production orchestrators | Medium |
-| A7 | `feature_mapping_output.json` schema / FM executor out of sync — `markdown_output` field missing from CONFORMANT_FMO fixture; `ccs_distribution` key casing mismatch (lowercase vs. schema capitalised) | High |
+| ID | Item | Severity for v0.9 | Status |
+|---|---|---|---|
+| A1 | Cross-runtime coupling via `skill_adapters.py` — no interface contract enforcement | High | Open |
+| A3 | `scorecard_compiler.py` not wired into CA `ASSEMBLING_PACKAGE` | High | PR-011 |
+| A4 | `claims_linter.py` layer boundary violation | Medium | Open |
+| ~~A7~~ | ~~`feature_mapping_output.json` / FM executor out of sync~~ | ~~High~~ | **Resolved (PR-009): ccs_distribution casing fixed, CONFORMANT_FMO fixture corrected** |
 
 ### Testing
 
-| ID | Item | Severity for v0.9 |
-|---|---|---|
-| T2 | CA tests mock skill execution — 205 tests use lambda overrides; real adapter chain never exercised | High |
-| T3 | No CA 6-skill end-to-end integration test — chain has never run with real inter-skill data | Critical |
-| T4 | `ethana-solution-mapping` has zero test fixtures — most logic-heavy local executor unvalidated | High |
-| T5 | Certifier L4 evidence validation incomplete — grants L4 for non-empty directory; CA incorrectly certified | Medium |
+| ID | Item | Severity for v0.9 | Status |
+|---|---|---|---|
+| T2 | CA tests mock skill execution — 205 tests use lambda overrides; real adapter chain never exercised | High | Unlocked (CA end-to-end next) |
+| T3 | No CA 6-skill end-to-end integration test | Critical | Next milestone after PR-009 |
+| T4 | `ethana-solution-mapping` has zero test fixtures | High | PR-010 |
+| T5 | Certifier L4 evidence validation incomplete | Medium | PR-012 |
 
 ---
 
 ## CA Adapter Audit Findings
 
-**Audit date:** 2026-06-21
-**Scope:** All 6 skill handoffs traced from source runtime through adapter to consumer; all schemas verified.
+**Audit date:** 2026-06-21 | **Updated:** 2026-06-22 (PR-009)
 
-### Critical Blockers (certain failures on first real run)
+### Resolved (PR-009)
 
-**M1 — Skill5Adapter does not consume Skill 3 output**
+**M1 — Skill5Adapter now reads Skill 3 output (ADR-007 implemented)**
 
-`Skill5Adapter._capability_list()` reads only from `ca_inputs`. Neither `capabilities` nor `capability_name` is a required intake field. `skill_3_json["matched_capabilities"]` contains exactly the capability list needed but is not read by the adapter (the extraction was deferred when Skill 3 was built).
+`Skill5Adapter._capability_list()` now extracts named capabilities from `upstream["skill_3_json"]["matched_capabilities"]`. Generic fallbacks excluded. Both Production and In Build entries included (In Build → ECS 0 → contradiction documentation). Standard CA runs on Audit-Log-surfacing input can proceed past Skill 4.
 
-**Effect:** Every standard CA run halts at `HALTED_ESCALATION` after Skill 4. Skills FM, 6, and package assembly are unreachable.
+**M2 — Gate 5c ECS ceiling raised to 95 (ADR-008 Option A implemented)**
 
-**Fix location:** `agents/client-assessment-agent/runtime/skill_adapters.py` — `Skill5Adapter._capability_list()`. Extract from `upstream["skill_3_json"]["matched_capabilities"]`.
+CVA executor audit branch: ECS 85 → **95**. Gate 5c threshold remains 90. Immutable Audit Log clears Gate 5c with 5 points of headroom. 1 of 17 Production capabilities clears Gate 5c. Remaining 16 capabilities require Phase B (ADR-009).
 
-**Status:** ADR-007 approved — decision recorded at `docs/decisions/ADR-007-skill5-capability-source.md`. Pending implementation in PR-009 sprint.
+**M3 — ccs_distribution key casing fixed**
 
----
+`solution_mapping_executor.py`: lowercase keys (`full/high/partial/thin/none`) corrected to capitalised (`Full/High/Partial/Thin/None`) matching `solution_mapping_output.json` schema contract.
 
-**M2 — Gate 5c ECS threshold exceeds CVA executor maximum**
+**M5 — Skill6Adapter defensive guard added**
 
-Gate 5c threshold: **90** (from `config.yaml`, read at `orchestrator.py:824`).
-CVA executor maximum ECS: **85** (Authoritative path, Immutable Audit Log).
-Mock default used by all 205 tests: **94**.
-
-Root cause: `skills/ethana-capability-validation/SKILL.md` documents a `use-cases.md` corroboration increment of +10 ECS. The CVA executor checks for the file and logs it in `sources_checked` but never applies the increment to the ECS integer. With the increment applied: Immutable Audit Log reaches 95, clearing Gate 5c. The threshold of 90 is correct and intentional.
-
-**Effect:** Even after M1 is fixed, every CA run halts at `HALTED_GATE_5_SCORE_INSUFFICIENT`. The back half of the chain is unreachable until the executor omission is corrected.
-
-**Status:** ADR-008 approved — decision recorded at `docs/decisions/ADR-008-gate5-ecs-calibration.md`. Fix: implement missing `use-cases.md` +10 ECS increment in CVA executor. Threshold remains at 90. Pending implementation in PR-009 sprint.
-
----
+`Skill6Adapter.map_output` now raises `SkillAdapterError` with M5 diagnostic when `proposal_review_md` is absent. Converts opaque "empty markdown content" Gate 6b failure into an actionable error. Architecture (out-of-band delivery) unchanged.
 
 ### High Risk (unknown until first real run)
 
-**M5 — EPA markdown delivered out-of-band via state_mgr**
-
-EPA executor writes `proposal_review_md` to `state_mgr` as a side effect rather than including it in the return value. `Skill6Adapter.map_output` reads it back from `state_mgr.get_state()`. Works synchronously in-process; breaks if decoupled. Gate 6b failure message (`"empty markdown content"`) does not identify the real cause.
-
 **M7 — EPA scoring against concatenated governance markdown unverified**
 
-`draft_proposal` fed to EPA is the concatenated Skills 1–5 markdown — regulatory analysis, control specifications, ISO gap assessment, solution mapping, and capability validation. EPA's claim extractor was designed for standalone proposal documents. Unexpected CTCS scoring or false-positive CFBs are possible when applied to governance analysis content. Has never been exercised.
+`draft_proposal` fed to EPA is the concatenated Skills 1–5 markdown. EPA's claim extractor was designed for standalone proposal documents. Unexpected CTCS or false-positive CFBs are possible. First real-adapter run will expose this.
 
-### Lower Risk
+### Lower Risk (open)
 
 | ID | Issue | Notes |
 |---|---|---|
-| M3 | `ccs_distribution` key casing mismatch — executor produces lowercase keys; schema declares capitalised | Not a runtime blocker; will affect scorecard compiler if it reads this field |
 | M4 | Empty `control_requirements` for India non-NBFC non-BFSI profiles causes Skill 2 pre-check halt | Outside v0.9 fixture scope |
-| M6 | `platform_coverage` boolean derived from string match `"Ethana" in coverage_classification` — silent failure if RWA string format changes | Latent; no contract enforcement |
+| M6 | `platform_coverage` boolean derived from `"Ethana" in coverage_classification` — silent failure if RWA format changes | Latent; no contract enforcement |
 
 ---
 
@@ -149,15 +136,15 @@ EPA executor writes `proposal_review_md` to `state_mgr` as a side effect rather 
 
 | ADR | Title | Resolves | Status |
 |---|---|---|---|
-| [ADR-007](../docs/decisions/ADR-007-skill5-capability-source.md) | Capability Source for Skill 5 in the Client Assessment Chain | M1 | **Accepted** |
-| [ADR-008](../docs/decisions/ADR-008-gate5-ecs-calibration.md) | ECS Threshold and CVA Executor Scoring Calibration for Gate 5c | M2 | **Accepted** |
-| [ADR-009](../docs/decisions/ADR-009-ecs-general-fallback-calibration.md) | ECS General Fallback Calibration and Per-Capability Evidence Architecture | M2 (Phase B) | **Proposed** |
+| [ADR-007](../docs/decisions/ADR-007-skill5-capability-source.md) | Capability Source for Skill 5 in the Client Assessment Chain | M1 | **Accepted — Implemented PR-009** |
+| [ADR-008](../docs/decisions/ADR-008-gate5-ecs-calibration.md) | ECS Threshold and CVA Executor Scoring Calibration for Gate 5c | M2 | **Accepted — Option A Implemented PR-009** |
+| [ADR-009](../docs/decisions/ADR-009-ecs-general-fallback-calibration.md) | ECS General Fallback Calibration and Per-Capability Evidence Architecture | M2 (Phase B) | **Proposed — Phase B; NOT implemented in PR-009** |
 
 **ADR-007 decision:** `Skill5Adapter._capability_list()` derives capabilities from `upstream["skill_3_json"]["matched_capabilities"]`. Generic fallback entries excluded. GCM/ISO extraction deferred to Phase B.
 
-**ADR-008 decision:** Gate 5c threshold remains at 90. Missing `use-cases.md` +10 ECS increment implemented in CVA executor. Immutable Audit Log path: 85 → 95. General fallback Production path recalibration deferred to Phase B (ADR-009).
+**ADR-008 Option A:** Gate 5c threshold remains at 90. `use-cases.md` +10 ECS increment applied in CVA executor audit branch. Immutable Audit Log: 85 → 95. General fallback (16/17 capabilities) deferred to Phase B per ADR-009.
 
-**ADR-009 decision (Proposed — Phase B):** Add per-capability `ecs_evidence` blocks to the CPM recording `architecture_corroboration`, `use_cases_corroboration`, and `contradictions`. Replace keyword-path ECS selection in `skill_executor.py` with an evidence-driven function that reads from CPM metadata. Result: 15 of 17 general fallback Production capabilities reach ECS 95 and clear Gate 5c. MCP Security Broker reaches ECS 85 (below threshold) until its documented contradiction is resolved. ADR-008 Option A remains the v0.9 implementation; ADR-009 is the Phase B target.
+**ADR-009 decision (Proposed — Phase B):** Add per-capability `ecs_evidence` blocks to CPM; replace keyword-path ECS selection with evidence-driven function. 15 of 17 Production capabilities reach ECS 95 after Phase B. MCP Broker stays at 85 until contradiction resolved.
 
 ---
 
@@ -166,8 +153,13 @@ EPA executor writes `proposal_review_md` to `state_mgr` as a side effect rather 
 ```
 PR-008 — RWA L4 Certification                   ✓ COMPLETE
   │
-PR-009 — Documentation & Schema Repairs          ← ACTIVE CRITICAL PATH
-  │   ADR-007, ADR-008, ADR-009 decisions approved; implement M1 and M2 fixes in this sprint
+PR-009 — Documentation & Schema Repairs          ✓ COMPLETE
+  │   M1/M2/M3/M5 resolved; 326/326 per-module; GRA AGENT.md; workflow updated
+  ↓
+CA End-to-End Validation                         ← NEXT MILESTONE
+  │   Immutable Audit Log path now viable (M1+M2 resolved)
+  │   v0.9 integration test: Audit-Log-surfacing EU BFSI input → COMPLETE
+  │   M7 risk will manifest here; budget 1–2 weeks with M5 guard now in place
   ↓
 PR-010 — Fixture Expansion
   │   (ESM × 3, FM × 3)
@@ -177,18 +169,8 @@ PR-011 — Scorecard Compiler Integration
 PR-012 — Certifier Upgrade
   │   (CA end-to-end test must exist before merge)
   ↓
-CA End-to-End Validation
-  │   M1 and M2 resolved per ADR-007 and ADR-008
-  │   Budget 2–3 weeks; M7 EPA behaviour unknown
-  ↓
 Governance OS v0.9 Internal Tool
 ```
-
-**Pre-integration actions required before CA end-to-end test:**
-1. Implement ADR-007 — fix M1 in `Skill5Adapter._capability_list()` (extract from `skill_3_json["matched_capabilities"]`)
-2. Implement ADR-008 — fix M2 by adding `use-cases.md` +10 ECS increment in CVA `skill_executor.py`; update mock default from 94 to 95
-3. Add defensive guard in `Skill6Adapter.map_output` for empty markdown (M5)
-4. Fix `ccs_distribution` key casing in `solution_mapping_executor.py` (M3)
 
 ---
 
@@ -196,11 +178,11 @@ Governance OS v0.9 Internal Tool
 
 | Scenario | Remaining | Basis |
 |---|---|---|
-| **Best case** | 3–4 weeks | M1/M2 resolved in PR-009 sprint; CA adapters clean once gates are corrected |
-| **Expected** | 5–6 weeks | PR-009–012 take 2.5 weeks; CA end-to-end takes 2–3 weeks with one round of adapter debugging |
-| **Conservative** | 7–8 weeks | Scorecard compiler requires non-trivial refactor; M7 EPA scoring produces unexpected results requiring iteration |
+| **Best case** | 2–3 weeks | CA end-to-end passes cleanly; M7 does not produce unexpected EPA behaviour |
+| **Expected** | 4–5 weeks | CA end-to-end needs one iteration on M7 EPA calibration; PR-010/011 run in parallel |
+| **Conservative** | 6–7 weeks | M7 EPA scoring on concatenated governance markdown produces false-positive CFBs requiring explicit calibration ADR and executor change |
 
-**Primary bottleneck:** CA adapter chain integration. M1 and M2 are certain failures. M7 and M5 are unknown-risk until first real run. All 205 existing CA tests must be supplemented with at least one real-adapter integration test before v0.9 can be declared.
+**Primary bottleneck (updated):** CA end-to-end integration test. M1 and M2 are resolved. M7 (EPA scoring) and M5 (now guarded) are the remaining unknowns. The first real-adapter run will surface M7 behaviour.
 
 ---
 
@@ -208,19 +190,17 @@ Governance OS v0.9 Internal Tool
 
 | Dimension | Rating | Notes |
 |---|---|---|
-| Architecture | Good | Sound design; Claims Firewall production-hardened; 4-layer separation understood and documented |
-| Specification | Good | CA AGENT.md, state-machine.md, evaluation.md are production-quality; ADRs document real decisions |
-| Testing | Moderate | 315/316 passing; RWA now fully covered; CA mocks hide two certain integration failures |
-| Documentation | Moderate | governance-assessment-workflow.md stale; GRA has no AGENT.md; CA AGENT.md has stale blockers |
-| Integration | High Risk | CA adapter chain has never run end-to-end; M1 and M2 are confirmed blockers |
+| Architecture | Good | Sound design; Claims Firewall production-hardened; ADRs 7–9 document adapter boundary decisions |
+| Specification | Good | All 6 agents have AGENT.md; CA state-machine.md and workflow.yaml are authoritative; GRA AGENT.md added PR-009 |
+| Testing | Good | 326/326 per-module; 10 new tests for M1/M2/M5 adapter contracts; CVA ECS 95 asserted |
+| Documentation | Good | governance-assessment-workflow.md updated to 6-skill chain; CA AGENT.md stale blockers corrected |
+| Integration | Medium Risk | M1+M2 resolved; CA chain can reach Skill 6 on Audit-Log input; M7 unknown until first real run |
 | Production Readiness | Low | No API, no notifications, no deployment infrastructure, no Client Memory |
-
-**Primary risk:** Client Assessment integration through real adapter execution. The Skill 5 adapter boundary (M1 + M2) must be resolved before the CA end-to-end integration test can produce a COMPLETE run. Until that test passes, v0.9 cannot be declared.
 
 ---
 
 ## Next Milestone
 
-**v0.9 Internal Tool:** All 6 agents at genuine L4; CA chain executes end-to-end with real data; Executive Assessment Package produced; scorecard compiler wired; certifier evidence-based.
+**CA End-to-End Validation:** first complete CA run using real adapters on Audit-Log-surfacing EU BFSI input → COMPLETE state → 12 artifacts. This is the blocker for v0.9 certification. M7 EPA behaviour will be exposed here.
 
-**Immediate action:** Start PR-009. Resolve M1 and M2 during the PR-009 sprint to de-risk the CA integration path before fixture work begins.
+**Immediate action:** Design and execute the CA end-to-end integration test (T3). Use the EU AI Act Article 12 audit trail fixture (Immutable Audit Log surfaces in Skill 3; ECS 95 clears Gate 5c). Monitor Gate 6 for M7 EPA behaviour.

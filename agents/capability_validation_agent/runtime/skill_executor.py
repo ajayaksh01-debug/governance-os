@@ -195,26 +195,29 @@ class SkillExecutor:
             scope_covers = ["Gateway-routed AI traffic logging", "Splunk/Elastic/Datadog SIEM export"]
             scope_excludes = ["Bypassed API calls", "Hardware-level WORM database layer immutability"]
             
-            # ECS computation Path A
+            # ECS computation Path A (ADR-008 Option A: +10 use-cases.md increment applied)
             ecs_path = "A"
-            ecs = 85
+            ecs = 95
             ecs_band = "Authoritative"
-            ecs_arithmetic = "Base: +50; Detailed Entry: +20; Architecture Corroboration: +15; Total: 85"
-            
+            ecs_arithmetic = (
+                "Base: +50; Detailed Entry: +20; Architecture Corroboration: +15; "
+                "Use-cases.md corroboration: +10; Total: 95"
+            )
+
             # Allowed claims CPL split
             allowed_claims.append({
                 "claim_text": "Ethana's Immutable Audit Log provides application-layer immutability for gateway-routed traffic.",
                 "cpl": "CPL-1",
                 "permitted_contexts": ["All contexts", "Formal Proposal", "RFP Response", "Marketing"],
                 "required_caveat": "",
-                "evidence_basis": "canonical-product-model.md — Production; ECS 85"
+                "evidence_basis": "canonical-product-model.md — Production; ECS 95"
             })
             allowed_claims.append({
                 "claim_text": "Ethana provides an Immutable Audit Log.",
                 "cpl": "CPL-2",
                 "permitted_contexts": ["Formal Proposal", "RFP Response", "Discovery Conversation"],
                 "required_caveat": "Application-layer immutability only — database-layer WORM enforcement not confirmed.",
-                "evidence_basis": "canonical-product-model.md — Production; ECS 85"
+                "evidence_basis": "canonical-product-model.md — Production; ECS 95"
             })
             
             # Prohibited claims (WORM scope expansion)
@@ -234,9 +237,9 @@ class SkillExecutor:
                     "cpl": "CPL-5",
                     "permitted_contexts": ["Marketing"],
                     "required_caveat": "",
-                    "evidence_basis": "canonical-product-model.md — Production; ECS 85"
+                    "evidence_basis": "canonical-product-model.md — Production; ECS 95"
                 })
-                
+
         elif "discovery" in cap_key or cap_name_input == "Ethana Discovery":
             # Fixture 2: Roadmap capability claimed as Production
             validated_status = "In Build"

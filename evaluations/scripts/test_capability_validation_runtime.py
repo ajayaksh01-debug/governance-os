@@ -73,7 +73,7 @@ class TestCapabilityValidationRuntime(unittest.TestCase):
         
         int_data = state["intermediate_data"]
         self.assertEqual(int_data["validated_status"], "Production")
-        self.assertTrue(80 <= int_data["ecs"] <= 90)
+        self.assertEqual(int_data["ecs"], 95)
         self.assertEqual(int_data["ecs_band"], "Authoritative")
         
         # Verify JSON payload has correct fields
@@ -149,6 +149,28 @@ class TestCapabilityValidationRuntime(unittest.TestCase):
         self.assertEqual(len(s1_json["allowed_claims"]), 2)
         self.assertEqual(s1_json["allowed_claims"][0]["cpl"], "CPL-2")
         self.assertEqual(s1_json["allowed_claims"][1]["cpl"], "CPL-3")
+
+    def test_adr008_audit_log_ecs_95_and_arithmetic(self):
+        """ADR-008 Option A acceptance: Immutable Audit Log ECS == 95 with +10 increment."""
+        inputs = {
+            "capability_name": "Immutable Audit Log",
+            "claim_context": "Formal Proposal",
+            "requesting_team": "Advisory"
+        }
+        self.orchestrator._generate_traceability_id = lambda: self.trace_id
+        self.orchestrator.start_run("new_capability_validation_request", inputs)
+
+        state_mgr = StateManager(str(self.orchestrator.runs_dir), self.trace_id)
+        int_data = state_mgr.load_state()["intermediate_data"]
+
+        self.assertEqual(int_data["ecs"], 95)
+        self.assertEqual(int_data["ecs_band"], "Authoritative")
+
+        s1_json = int_data["capability_validation_output_json"]
+        self.assertIn("Use-cases.md corroboration: +10", s1_json["ecs_arithmetic"])
+        self.assertIn("Total: 95", s1_json["ecs_arithmetic"])
+        self.assertIn("ECS 95", s1_json["allowed_claims"][0]["evidence_basis"])
+
 
 if __name__ == "__main__":
     unittest.main()

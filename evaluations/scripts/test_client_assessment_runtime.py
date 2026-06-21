@@ -1022,5 +1022,151 @@ class TestStateMachineStructure(unittest.TestCase):
         self.assertEqual(VALID_TRANSITIONS.get("HALTED_FIREWALL_BREACH_TERMINAL"), set())
 
 
+# ---------------------------------------------------------------------------
+# PR-009 adapter unit tests
+# ---------------------------------------------------------------------------
+
+from skill_adapters import Skill5Adapter, Skill6Adapter, SkillAdapterError
+
+
+class TestSkill5AdapterCapabilityList(unittest.TestCase):
+    """ADR-007 acceptance tests: _capability_list extracts from skill_3_json."""
+
+    def _adapter(self):
+        return Skill5Adapter(runs_dir="/tmp", logs_dir="/tmp")
+
+    def test_extracts_named_capabilities_from_skill3(self):
+        """Named CPM capabilities from matched_capabilities are returned."""
+        adapter = self._adapter()
+        upstream = {
+            "skill_3_json": {
+                "matched_capabilities": [
+                    {"matched_capability": "Immutable Audit Log", "requirement": "Record all AI interactions"},
+                    {"matched_capability": "LLM Gateway", "requirement": "Route all AI traffic"},
+                ]
+            }
+        }
+        result = adapter._capability_list({}, upstream)
+        names = [c["capability_name"] for c in result]
+        self.assertEqual(names, ["Immutable Audit Log", "LLM Gateway"])
+
+    def test_excludes_generic_fallback_entries(self):
+        """Generic fallbacks (Ethana Platform, Cursory advisory service) are filtered out."""
+        adapter = self._adapter()
+        upstream = {
+            "skill_3_json": {
+                "matched_capabilities": [
+                    {"matched_capability": "Ethana Platform", "requirement": "General platform"},
+                    {"matched_capability": "Cursory advisory service", "requirement": "Advisory"},
+                    {"matched_capability": "Immutable Audit Log", "requirement": "Record keeping"},
+                ]
+            }
+        }
+        result = adapter._capability_list({}, upstream)
+        names = [c["capability_name"] for c in result]
+        self.assertNotIn("Ethana Platform", names)
+        self.assertNotIn("Cursory advisory service", names)
+        self.assertEqual(names, ["Immutable Audit Log"])
+
+    def test_deduplicates_capability_names(self):
+        """Duplicate capability entries are reduced to one."""
+        adapter = self._adapter()
+        upstream = {
+            "skill_3_json": {
+                "matched_capabilities": [
+                    {"matched_capability": "Immutable Audit Log", "requirement": "Requirement A"},
+                    {"matched_capability": "Immutable Audit Log", "requirement": "Requirement B"},
+                ]
+            }
+        }
+        result = adapter._capability_list({}, upstream)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["capability_name"], "Immutable Audit Log")
+
+    def test_proposed_claim_includes_requirement(self):
+        """proposed_claim is derived from the matched requirement."""
+        adapter = self._adapter()
+        upstream = {
+            "skill_3_json": {
+                "matched_capabilities": [
+                    {"matched_capability": "LLM Gateway", "requirement": "Route AI traffic securely"},
+                ]
+            }
+        }
+        result = adapter._capability_list({}, upstream)
+        self.assertIn("Route AI traffic securely", result[0]["proposed_claim"])
+
+    def test_ca_inputs_capabilities_takes_priority(self):
+        """Explicit ca_inputs['capabilities'] overrides Skill 3 extraction."""
+        adapter = self._adapter()
+        explicit = [{"capability_name": "Override Cap", "proposed_claim": "explicit"}]
+        upstream = {
+            "skill_3_json": {
+                "matched_capabilities": [
+                    {"matched_capability": "Immutable Audit Log", "requirement": "Record keeping"},
+                ]
+            }
+        }
+        result = adapter._capability_list({"capabilities": explicit}, upstream)
+        self.assertEqual(result[0]["capability_name"], "Override Cap")
+
+    def test_raises_informative_error_on_all_generic_fallbacks(self):
+        """Raises SkillAdapterError with diagnostic when only generic entries present."""
+        adapter = self._adapter()
+        upstream = {
+            "skill_3_json": {
+                "matched_capabilities": [
+                    {"matched_capability": "Ethana Platform", "requirement": "General"},
+                ]
+            }
+        }
+        with self.assertRaises(SkillAdapterError) as ctx:
+            adapter._capability_list({}, upstream)
+        self.assertIn("no named CPM capabilities", str(ctx.exception))
+
+    def test_raises_error_on_empty_skill3_and_no_inputs(self):
+        """Raises SkillAdapterError when skill_3_json is missing and no ca_inputs override."""
+        adapter = self._adapter()
+        with self.assertRaises(SkillAdapterError):
+            adapter._capability_list({}, {})
+
+
+class TestSkill6AdapterMarkdownGuard(unittest.TestCase):
+    """B4 / M5 defensive guard: empty proposal_review_md raises SkillAdapterError."""
+
+    def _make_state_mgr(self, md_value):
+        class _FakeStateMgr:
+            def get_state(self):
+                return {"intermediate_data": {"proposal_review_md": md_value}}
+        return _FakeStateMgr()
+
+    def test_raises_on_missing_markdown(self):
+        """SkillAdapterError raised when proposal_review_md is absent."""
+        adapter = Skill6Adapter(runs_dir="/tmp", logs_dir="/tmp")
+        state_mgr = self._make_state_mgr("")
+        raw = {
+            "classification": "Approved",
+            "pcs": 91, "ctcs": 88, "cfb_count": 0,
+            "hard_disqualifiers_triggered": False,
+        }
+        with self.assertRaises(SkillAdapterError) as ctx:
+            adapter.map_output(raw, {}, None, state_mgr)
+        self.assertIn("proposal_review_md", str(ctx.exception))
+        self.assertIn("M5", str(ctx.exception))
+
+    def test_passes_with_valid_markdown(self):
+        """map_output succeeds when proposal_review_md is non-empty."""
+        adapter = Skill6Adapter(runs_dir="/tmp", logs_dir="/tmp")
+        state_mgr = self._make_state_mgr("# Proposal Review\n\nApproved.")
+        raw = {
+            "classification": "Approved",
+            "pcs": 91, "ctcs": 88, "cfb_count": 0,
+            "hard_disqualifiers_triggered": False,
+        }
+        result = adapter.map_output(raw, {}, None, state_mgr)
+        self.assertEqual(result["markdown_output"], "# Proposal Review\n\nApproved.")
+        self.assertEqual(result["release_classification"], "Approved")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

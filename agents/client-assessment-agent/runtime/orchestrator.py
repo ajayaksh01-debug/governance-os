@@ -506,7 +506,7 @@ class Orchestrator:
         ):
             return
 
-        ecs = s5_json.get("ecs", inputs.get("mock_skill_5_score", 94))
+        ecs = s5_json.get("ecs", inputs.get("mock_skill_5_score", 95))
         pass_threshold = int(self.config.get("thresholds", {}).get("skill_5_pass", 90))
         escalation_required = s5_json.get("escalation_required", False)
 

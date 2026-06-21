@@ -234,10 +234,18 @@ class Skill5Adapter(BaseSkillAdapter):
     def _capability_list(self, ca_inputs: dict, upstream: dict) -> list:
         """Resolve the set of capabilities to validate.
 
-        Preferred source is an explicit ``capabilities`` list. Until Skill 3
-        (solution-mapping) is implemented, fall back to a single capability from
-        ``capability_name``. Full extraction from solution-mapping Section 3
-        lands when Skill 3 is built.
+        Priority order:
+        1. Explicit ``capabilities`` list from ca_inputs (targeted override).
+        2. Single ``capability_name`` from ca_inputs (targeted override).
+        3. ``skill_3_json["matched_capabilities"]`` — primary source for standard
+           governance assessment runs (ADR-007, Option D).
+
+        Generic fallback entries ("Ethana Platform", "Cursory advisory service")
+        are excluded — they do not map to CPM entries and force escalation.
+        Both Production and In Build entries are included; In Build entries produce
+        ECS=0 and generate prohibited-claim documentation (Claims Firewall purpose).
+
+        GCM Section 10 / ISO Section 8 extraction deferred to Phase B (ADR-007).
         """
         caps = ca_inputs.get("capabilities")
         if isinstance(caps, list) and caps:
@@ -248,9 +256,28 @@ class Skill5Adapter(BaseSkillAdapter):
                 "capability_name": single,
                 "proposed_claim": ca_inputs.get("proposed_claim", ""),
             }]
+        rows = upstream.get("skill_3_json", {}).get("matched_capabilities", [])
+        seen = set()
+        caps = []
+        for row in rows:
+            name = row.get("matched_capability", "")
+            if name in ("Ethana Platform", "Cursory advisory service") or name in seen:
+                continue
+            seen.add(name)
+            caps.append({
+                "capability_name": name,
+                "proposed_claim": (
+                    f"Ethana {name} addresses the governance requirement: "
+                    f"{row.get('requirement', '')}"
+                ),
+            })
+        if caps:
+            return caps
+        # GCM Section 10 / ISO Section 8 extraction deferred to Phase B (ADR-007).
         raise SkillAdapterError(
-            "Skill 5 requires at least one capability "
-            "(inputs['capabilities'] or inputs['capability_name'])."
+            "Skill 5 pre-check failed: skill_3_json matched_capabilities contained "
+            "no named CPM capabilities (only generic fallbacks or empty list). "
+            "Supply ca_inputs['capabilities'] or ca_inputs['capability_name'] to override."
         )
 
     def map_inputs(self, ca_inputs: dict, upstream: dict) -> dict:
@@ -412,7 +439,14 @@ class Skill6Adapter(BaseSkillAdapter):
         out["release_classification"] = self.CLASSIFICATION_MAP[source_classification]
         # Markdown is delivered out-of-band via state_mgr, not in the return value.
         intermediate = state_mgr.get_state().get("intermediate_data", {})
-        out["markdown_output"] = intermediate.get("proposal_review_md", "")
+        md = intermediate.get("proposal_review_md", "")
+        if not md:
+            raise SkillAdapterError(
+                "Skill 6 (proposal-review) markdown missing: EPA executor did not write "
+                "'proposal_review_md' to intermediate_data before Skill6Adapter.map_output. "
+                "This is the M5 out-of-band delivery path — check EPA executor side-effect write."
+            )
+        out["markdown_output"] = md
         return out
 
 
