@@ -107,7 +107,7 @@
 
 **Fix location:** `agents/client-assessment-agent/runtime/skill_adapters.py` — `Skill5Adapter._capability_list()`. Extract from `upstream["skill_3_json"]["matched_capabilities"]`.
 
-**Status:** Must be resolved before CA end-to-end execution.
+**Status:** ADR-007 approved — decision recorded at `docs/decisions/ADR-007-skill5-capability-source.md`. Pending implementation in PR-009 sprint.
 
 ---
 
@@ -117,13 +117,11 @@ Gate 5c threshold: **90** (from `config.yaml`, read at `orchestrator.py:824`).
 CVA executor maximum ECS: **85** (Authoritative path, Immutable Audit Log).
 Mock default used by all 205 tests: **94**.
 
-No capability path in the CVA executor produces ECS ≥ 90. Gate 5c always fails with real execution.
+Root cause: `skills/ethana-capability-validation/SKILL.md` documents a `use-cases.md` corroboration increment of +10 ECS. The CVA executor checks for the file and logs it in `sources_checked` but never applies the increment to the ECS integer. With the increment applied: Immutable Audit Log reaches 95, clearing Gate 5c. The threshold of 90 is correct and intentional.
 
-**Effect:** Even after M1 is fixed, every CA run halts at `HALTED_GATE_5_SCORE_INSUFFICIENT`. The back half of the chain is unreachable.
+**Effect:** Even after M1 is fixed, every CA run halts at `HALTED_GATE_5_SCORE_INSUFFICIENT`. The back half of the chain is unreachable until the executor omission is corrected.
 
-**Fix options:** Lower Gate 5c threshold to ≤ 85 in `config.yaml`, or raise the CVA executor ECS ceiling for Authoritative Production capabilities.
-
-**Status:** Architectural decision required before integration test.
+**Status:** ADR-008 approved — decision recorded at `docs/decisions/ADR-008-gate5-ecs-calibration.md`. Fix: implement missing `use-cases.md` +10 ECS increment in CVA executor. Threshold remains at 90. Pending implementation in PR-009 sprint.
 
 ---
 
@@ -147,13 +145,26 @@ EPA executor writes `proposal_review_md` to `state_mgr` as a side effect rather 
 
 ---
 
+## Approved Architecture Decisions
+
+| ADR | Title | Resolves | Status |
+|---|---|---|---|
+| [ADR-007](../docs/decisions/ADR-007-skill5-capability-source.md) | Capability Source for Skill 5 in the Client Assessment Chain | M1 | **Accepted** |
+| [ADR-008](../docs/decisions/ADR-008-gate5-ecs-calibration.md) | ECS Threshold and CVA Executor Scoring Calibration for Gate 5c | M2 | **Accepted** |
+
+**ADR-007 decision:** `Skill5Adapter._capability_list()` derives capabilities from `upstream["skill_3_json"]["matched_capabilities"]`. Generic fallback entries excluded. GCM/ISO extraction deferred to Phase B.
+
+**ADR-008 decision:** Gate 5c threshold remains at 90. Missing `use-cases.md` +10 ECS increment implemented in CVA executor. Immutable Audit Log path: 85 → 95. General fallback Production path recalibration deferred to Phase B.
+
+---
+
 ## Updated Roadmap
 
 ```
 PR-008 — RWA L4 Certification                   ✓ COMPLETE
   │
 PR-009 — Documentation & Schema Repairs          ← ACTIVE CRITICAL PATH
-  │   Resolve M1/M2 pre-analysis recommended during this sprint
+  │   ADR-007 and ADR-008 decisions approved; implement M1 and M2 fixes in this sprint
   ↓
 PR-010 — Fixture Expansion
   │   (ESM × 3, FM × 3)
@@ -164,15 +175,15 @@ PR-012 — Certifier Upgrade
   │   (CA end-to-end test must exist before merge)
   ↓
 CA End-to-End Validation
-  │   Resolve M1 and M2 before starting
+  │   M1 and M2 resolved per ADR-007 and ADR-008
   │   Budget 2–3 weeks; M7 EPA behaviour unknown
   ↓
 Governance OS v0.9 Internal Tool
 ```
 
 **Pre-integration actions required before CA end-to-end test:**
-1. Fix M1 in `Skill5Adapter._capability_list()`
-2. Resolve M2 threshold decision
+1. Implement ADR-007 — fix M1 in `Skill5Adapter._capability_list()` (extract from `skill_3_json["matched_capabilities"]`)
+2. Implement ADR-008 — fix M2 by adding `use-cases.md` +10 ECS increment in CVA `skill_executor.py`; update mock default from 94 to 95
 3. Add defensive guard in `Skill6Adapter.map_output` for empty markdown (M5)
 4. Fix `ccs_distribution` key casing in `solution_mapping_executor.py` (M3)
 
