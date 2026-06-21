@@ -151,10 +151,13 @@ EPA executor writes `proposal_review_md` to `state_mgr` as a side effect rather 
 |---|---|---|---|
 | [ADR-007](../docs/decisions/ADR-007-skill5-capability-source.md) | Capability Source for Skill 5 in the Client Assessment Chain | M1 | **Accepted** |
 | [ADR-008](../docs/decisions/ADR-008-gate5-ecs-calibration.md) | ECS Threshold and CVA Executor Scoring Calibration for Gate 5c | M2 | **Accepted** |
+| [ADR-009](../docs/decisions/ADR-009-ecs-general-fallback-calibration.md) | ECS General Fallback Calibration and Per-Capability Evidence Architecture | M2 (Phase B) | **Proposed** |
 
 **ADR-007 decision:** `Skill5Adapter._capability_list()` derives capabilities from `upstream["skill_3_json"]["matched_capabilities"]`. Generic fallback entries excluded. GCM/ISO extraction deferred to Phase B.
 
-**ADR-008 decision:** Gate 5c threshold remains at 90. Missing `use-cases.md` +10 ECS increment implemented in CVA executor. Immutable Audit Log path: 85 → 95. General fallback Production path recalibration deferred to Phase B.
+**ADR-008 decision:** Gate 5c threshold remains at 90. Missing `use-cases.md` +10 ECS increment implemented in CVA executor. Immutable Audit Log path: 85 → 95. General fallback Production path recalibration deferred to Phase B (ADR-009).
+
+**ADR-009 decision (Proposed — Phase B):** Add per-capability `ecs_evidence` blocks to the CPM recording `architecture_corroboration`, `use_cases_corroboration`, and `contradictions`. Replace keyword-path ECS selection in `skill_executor.py` with an evidence-driven function that reads from CPM metadata. Result: 15 of 17 general fallback Production capabilities reach ECS 95 and clear Gate 5c. MCP Security Broker reaches ECS 85 (below threshold) until its documented contradiction is resolved. ADR-008 Option A remains the v0.9 implementation; ADR-009 is the Phase B target.
 
 ---
 
@@ -164,7 +167,7 @@ EPA executor writes `proposal_review_md` to `state_mgr` as a side effect rather 
 PR-008 — RWA L4 Certification                   ✓ COMPLETE
   │
 PR-009 — Documentation & Schema Repairs          ← ACTIVE CRITICAL PATH
-  │   ADR-007 and ADR-008 decisions approved; implement M1 and M2 fixes in this sprint
+  │   ADR-007, ADR-008, ADR-009 decisions approved; implement M1 and M2 fixes in this sprint
   ↓
 PR-010 — Fixture Expansion
   │   (ESM × 3, FM × 3)

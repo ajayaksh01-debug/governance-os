@@ -13,6 +13,10 @@ This directory contains the Architecture Decision Records (ADRs) for the Governa
 | **[ADR-003](file:///Users/ajayrajsingh/Documents/governance-os/docs/decisions/ADR-003-skills-vs-workflows.md)** | Separation of Architectural Layers | **Accepted** | 2026-06-17 |
 | **[ADR-004](file:///Users/ajayrajsingh/Documents/governance-os/docs/decisions/ADR-004-primary-source-evidence.md)** | Primary-Source Evidence Requirements | **Accepted** | 2026-06-17 |
 | **[ADR-005](file:///Users/ajayrajsingh/Documents/governance-os/docs/decisions/ADR-005-proposal-review-gate.md)** | Mandatory Proposal Review Release Gate | **Accepted** | 2026-06-17 |
+| **[ADR-006](file:///Users/ajayrajsingh/Documents/governance-os/docs/decisions/ADR-006-governance-review-terminal-gate.md)** | Governance Review Terminal Gate | **Accepted** | 2026-06-17 |
+| **[ADR-007](file:///Users/ajayrajsingh/Documents/governance-os/docs/decisions/ADR-007-skill5-capability-source.md)** | Capability Source for Skill 5 in the Client Assessment Chain | **Accepted** | 2026-06-21 |
+| **[ADR-008](file:///Users/ajayrajsingh/Documents/governance-os/docs/decisions/ADR-008-gate5-ecs-calibration.md)** | ECS Threshold and CVA Executor Scoring Calibration for Gate 5c | **Accepted** | 2026-06-21 |
+| **[ADR-009](file:///Users/ajayrajsingh/Documents/governance-os/docs/decisions/ADR-009-ecs-general-fallback-calibration.md)** | ECS General Fallback Calibration and Per-Capability Evidence Architecture | **Proposed** | 2026-06-21 |
 
 ---
 
