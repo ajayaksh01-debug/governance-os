@@ -211,6 +211,7 @@ class Skill2Adapter(BaseSkillAdapter):
                 "control_type": row.get("control_type"),
                 "coverage_classification": classification,
                 "platform_coverage": "Ethana" in classification,
+                "suggested_capability": row.get("suggested_capability", ""),
             })
         out["controls"] = controls
         out["markdown_output"] = src.compile_control_mapping_to_markdown(raw)

@@ -169,6 +169,69 @@ def parse_canonical_model(cpm_path: Path) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Control-to-capability map loading
+# ---------------------------------------------------------------------------
+
+def load_control_capability_map(map_path: Path) -> dict:
+    """
+    Parse control-capability-map.md into a lookup dict.
+
+    Returns:
+        {control_name_lower: {"primary": "cpm-key-or-empty", "secondary": []}}
+
+    Phase A: "secondary" is always [] regardless of column 4 content.
+    Phase B: "secondary" will be populated from column 4.
+
+    Returns {} if map_path does not exist (Risk 5: graceful degradation).
+    Emits a warning to stderr if a primary key is not found in the CPM.
+    """
+    if not map_path.exists():
+        print(f"Warning: control-capability-map not found at {map_path}", file=sys.stderr)
+        return {}
+
+    # Derive CPM path to validate primary keys at load time.
+    cpm_path = map_path.parent / "canonical-product-model.md"
+    cpm = parse_canonical_model(cpm_path) if cpm_path.exists() else {}
+
+    result: dict = {}
+    content = map_path.read_text(encoding="utf-8")
+
+    for raw_line in content.splitlines():
+        line = raw_line.strip()
+        if not line.startswith("|"):
+            continue
+        if "|---|" in line or line.startswith("|---"):
+            continue
+
+        parts = [p.strip() for p in line.split("|")[1:-1]]
+        if len(parts) < 4:
+            continue
+
+        # Skip header row
+        if parts[0].lower() == "control name":
+            continue
+
+        key = parts[0].lower()
+        primary = parts[2].lower()
+        # Phase A: secondary is always [] — column 4 is read but not consumed.
+
+        if not key:
+            continue
+
+        # Risk 2 mitigation: warn if primary key is not in the CPM.
+        if primary and cpm and primary not in cpm:
+            print(
+                f"Warning: control-capability-map primary key '{primary}' for "
+                f"'{parts[0]}' not found in canonical-product-model.md",
+                file=sys.stderr,
+            )
+
+        result[key] = {"primary": primary, "secondary": []}
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Linting
 # ---------------------------------------------------------------------------
 

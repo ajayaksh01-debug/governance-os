@@ -99,7 +99,13 @@ class SolutionMappingExecutor:
     def _score_requirement(self, control: dict) -> dict:
         requirement = control.get("name") or control.get("id") or "Unnamed requirement"
         classification = control.get("coverage_classification", "")
-        cap_display, status_norm = self._match_capability(requirement)
+        suggested = control.get("suggested_capability", "")
+        if suggested:
+            _entry = self._load_cpm().get(suggested)
+            cap_display = _entry["original_name"] if _entry else None
+            status_norm = _entry["status"] if _entry else None
+        else:
+            cap_display, status_norm = self._match_capability(requirement)
 
         if "Fully Covered by Ethana" in classification:
             base_ccs = _BAND_FULL

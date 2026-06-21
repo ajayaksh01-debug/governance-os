@@ -1168,5 +1168,104 @@ class TestSkill6AdapterMarkdownGuard(unittest.TestCase):
         self.assertEqual(result["release_classification"], "Approved")
 
 
+# ---------------------------------------------------------------------------
+# T3 — Natural extraction path: Skill 1 → Skill 2 → Skill2Adapter → Skill 3 (PR-010)
+# ---------------------------------------------------------------------------
+
+class TestNaturalExtractionPath(unittest.TestCase):
+    """T3: Direct executor chain test — no fixture injection, no ca_inputs overrides.
+
+    Verifies that the natural PR-010 data path (RWA Skill 1 → RWA Skill 2 →
+    Skill2Adapter → CA Skill 3) produces named CPM capabilities ("Immutable Audit Log")
+    in matched_capabilities for an EU BFSI + LLM intake without any fixture injection
+    or ca_inputs["capabilities"] / ca_inputs["capability_name"] overrides.
+    """
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        (self.tmp / "runs").mkdir()
+        (self.tmp / "logs").mkdir()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _rwa_executor(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "_rwa_skill_executor_t3",
+            str(repo_root / "agents" / "regulatory-watch-agent" / "runtime" / "skill_executor.py"),
+        )
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod.SkillExecutor(self.tmp / "runs", self.tmp / "logs")
+
+    def test_t3_immutable_audit_log_in_matched_capabilities_natural_path(self):
+        """
+        End-to-end natural chain: EU BFSI + LLM → Skill 2 emits suggested_capability
+        'immutable audit log' for Human Oversight Gate → Skill 3 resolves to
+        'Immutable Audit Log' via direct CPM lookup → appears in matched_capabilities.
+        """
+        import sys
+        sys.path.insert(0, str(repo_root / "agents" / "client-assessment-agent" / "runtime"))
+        sys.path.insert(0, str(repo_root / "agents" / "client-assessment-agent" / "runtime" / "skills"))
+        sys.path.insert(0, str(repo_root / "evaluations" / "scripts"))
+
+        from skill_adapters import Skill2Adapter
+        from solution_mapping_executor import SolutionMappingExecutor
+
+        class _DummyLogger:
+            def log(self, *a, **kw):
+                pass
+
+        rwa = self._rwa_executor()
+        lg = _DummyLogger()
+
+        # Skill 1 — natural execution (EU + BFSI + LLM intake)
+        r1 = rwa.execute_regulatory_mapping({
+            "subject_description": "LLM-powered credit scoring for retail banking customers",
+            "jurisdictions": ["EU"],
+            "industry": "BFSI",
+            "ai_technology": "LLM",
+        }, lg)
+
+        # Skill 2 — natural execution (receives Skill 1 output)
+        r2 = rwa.execute_governance_control_mapping(r1, lg)
+
+        # Skill2Adapter — propagates suggested_capability into controls list
+        adapter = Skill2Adapter(self.tmp / "runs", self.tmp / "logs")
+        s2_json = adapter.map_output(r2, {}, rwa, None)
+        controls = s2_json["controls"]
+
+        # Assert suggested_capability is populated for Human Oversight Gate
+        hog = next(
+            (c for c in controls if c.get("name") == "Human Oversight Gate"), None
+        )
+        self.assertIsNotNone(hog, "Human Oversight Gate not found in controls")
+        self.assertEqual(hog.get("suggested_capability"), "immutable audit log")
+
+        # Skill 3 — natural execution (no ca_inputs["capabilities"] or fixture override)
+        executor = SolutionMappingExecutor(self.tmp / "runs", self.tmp / "logs")
+        s3_out = executor.execute_solution_mapping({
+            "control_mapping_output": {"controls": controls},
+            "regulatory_mapping_output": r1,
+        }, lg)
+
+        matched_names = [m["matched_capability"] for m in s3_out["matched_capabilities"]]
+
+        # Core assertion: Immutable Audit Log must appear via natural extraction
+        self.assertIn(
+            "Immutable Audit Log", matched_names,
+            f"Expected 'Immutable Audit Log' in matched_capabilities, got: {matched_names}"
+        )
+
+        # Verify it has Production status and non-zero CCS (gate 5c reachable)
+        ial_entry = next(
+            m for m in s3_out["matched_capabilities"]
+            if m["matched_capability"] == "Immutable Audit Log"
+        )
+        self.assertEqual(ial_entry["capability_status"], "Production")
+        self.assertGreater(ial_entry["ccs_score"], 0)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

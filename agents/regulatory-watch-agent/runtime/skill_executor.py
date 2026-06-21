@@ -6,6 +6,7 @@ governance-control-mapping (Skill 2) workflows without canned mocks.
 """
 
 import os
+import sys
 import json
 import re
 import glob
@@ -19,6 +20,22 @@ class SkillExecutor:
     def __init__(self, runs_dir: Path, logs_dir: Path):
         self.runs_dir = runs_dir
         self.logs_dir = logs_dir
+        self._ccm = None
+
+    def _load_ccm(self) -> dict:
+        if self._ccm is not None:
+            return self._ccm
+        scripts = repo_root / "evaluations" / "scripts"
+        if str(scripts) not in sys.path:
+            sys.path.insert(0, str(scripts))
+        try:
+            from claims_linter import load_control_capability_map  # noqa: PLC0415
+            self._ccm = load_control_capability_map(
+                repo_root / "knowledge" / "ethana" / "control-capability-map.md"
+            )
+        except Exception:
+            self._ccm = {}
+        return self._ccm
 
     def load_skill_definition(self, skill_name: str) -> dict:
         """Loads and parses metadata from the skill definition Markdown file."""
@@ -345,19 +362,21 @@ class SkillExecutor:
         raci_matrix = []
         
         # Map each requirement to operational specifications
+        ccm = self._load_ccm()
         idx = 1
         for req in reqs:
             c_name = req["control_name"]
             c_type = req["control_type"]
             c_id = f"CTRL-{idx:02d}"
-            
+
             # Taxonomy
             control_taxonomy_matrix.append({
                 "control_id": c_id,
                 "control_name": c_name,
                 "control_type": c_type,
                 "control_method": "Process" if "assessment" in c_name.lower() or "due diligence" in req["description"].lower() else "Technical",
-                "coverage_classification": "Fully Covered by Ethana" if c_name in ["Human Oversight Gate", "Drift Monitoring", "Prompt Injection Filter", "Fairness and Bias Monitoring"] else "Partially Covered by Ethana" if c_name == "Consent Verification" else "Covered by Cursory Service"
+                "coverage_classification": "Fully Covered by Ethana" if c_name in ["Human Oversight Gate", "Drift Monitoring", "Prompt Injection Filter", "Fairness and Bias Monitoring"] else "Partially Covered by Ethana" if c_name == "Consent Verification" else "Covered by Cursory Service",
+                "suggested_capability": ccm.get(c_name.lower(), {}).get("primary", ""),
             })
             
             # preventive/detective specs

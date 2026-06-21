@@ -2,9 +2,9 @@
 
 ## Repository Version
 
-**Current Milestone:** v0.8.1-pr009-complete
-**Predecessor:** v0.8.1-pr008-complete (PR-008: RWA L4 Certification)
-**Status:** PR-009 Complete
+**Current Milestone:** v0.8.2-pr010-complete
+**Predecessor:** v0.8.1-pr009-complete (PR-009: Documentation, Schema, and Adapter Repairs)
+**Status:** PR-010 Complete
 
 ---
 
@@ -63,13 +63,41 @@
 - Per-module validation: 9/9 FM-PR, 18/18 Skill3, 4/4 CVA, 87/87 CA runtime, 34/34 RWA
 - **Test count after PR-009: 326 total / 326 passing (per-module)**
 - Full-suite: 298 passed / 28 failed — all 28 failures are pre-existing RWA test pollution (RWA 34/34 isolated); no new regressions introduced
+- **Test count after PR-010: 352 total / 352 passing (per-module)** (+26: 21 T6 + 4 T1 + 1 T3)
+
+**✓ PR-010 — Capability Discovery Repair (Natural Extraction Path)**
+
+Fixes M4: Skill 1 produces 6 regulatory control names that zero-match all 52 CPM keys via
+bidirectional substring matching → generic fallback cascade → `SkillAdapterError` → `HALTED_ESCALATION`.
+Solution: semantic knowledge bridge via `knowledge/ethana/control-capability-map.md`;
+`suggested_capability` field threaded through Skill 2 → Skill2Adapter → Skill 3;
+direct CPM dict access in `_score_requirement()` bypasses `_match_capability()`.
+
+*Files changed:*
+- **C1** — Created `knowledge/ethana/control-capability-map.md` (Option D): 6 control → CPM-key mappings, Option B pre-population, control-name covenant preamble
+- **C2** — Added `load_control_capability_map()` to `evaluations/scripts/claims_linter.py` (+63 lines): Phase A loader (secondary always `[]`), CPM key cross-validation, graceful file-not-found
+- **C3** — `agents/regulatory-watch-agent/runtime/skill_executor.py`: added `import sys`, `_ccm` cache, `_load_ccm()`, `ccm = self._load_ccm()` before control loop, `"suggested_capability"` field in `control_taxonomy_matrix.append()`
+- **C4** — `agents/client-assessment-agent/runtime/skill_adapters.py` (`Skill2Adapter.map_output`): added `"suggested_capability": row.get("suggested_capability", "")`
+- **C5** — `agents/client-assessment-agent/runtime/skills/solution_mapping_executor.py` (`_score_requirement`): direct CPM lookup via `self._load_cpm().get(suggested)` when `suggested_capability` non-empty; `_match_capability()` NOT modified
+
+*Tests:*
+- **T6** — 21 new tests in `test_control_capability_map.py`: T6(a) happy path, T6(b) missing file, T6(c) unknown key, T6(d) invalid CPM key warning, T6(e) covenant bijection validation
+- **T1** — 4 new tests in `test_client_assessment_skill3.py` (`TestSkill3SuggestedCapability`): Immutable Audit Log, Runtime Guardrails, empty primary fallback, invalid key graceful degradation
+- **T3** — 1 new test in `test_client_assessment_runtime.py` (`TestNaturalExtractionPath`): full chain EU BFSI + LLM → "Immutable Audit Log" in matched_capabilities, Production status, ccs > 0
+- **T2** — 18 pre-existing Skill3 tests: all pass, no modifications (confirmed no-op)
+- **T4** — Pre-existing runtime tests: no assertions on "Ethana Platform" for Skill 1 control names; confirmed no-op
+- **T5** — 34 RWA tests: all pass after `suggested_capability` field addition
+
+*Test count after PR-010: 352 total / 352 passing (per-module)*
+*(+26 new: 21 T6 + 4 T1 + 1 T3)*
+
+*M4 status:* **Resolved.** Human Oversight Gate → `immutable audit log` → `Immutable Audit Log` (Production, CCS 95) in matched_capabilities. Gate 5c (ECS ≥ 90) is now reachable from real intake for EU BFSI + LLM clients.
 
 ### Remaining
 
-- **PR-010** — Fixture Expansion (ethana-solution-mapping × 3, ethana-feature-mapping × 3)
 - **PR-011** — Scorecard Compiler Integration (wire into CA `ASSEMBLING_PACKAGE`)
 - **PR-012** — Certifier Upgrade (evidence-based L4; blocked until CA end-to-end test exists)
-- **CA End-to-End Validation** — first real run: Audit-Log-surfacing EU BFSI input → 6 skills via real adapters → 4 approval gates → COMPLETE; unlocked by PR-009 M1+M2 fixes
+- **CA End-to-End Validation** — first real run: Audit-Log-surfacing EU BFSI input → 6 skills via real adapters → 4 approval gates → COMPLETE; unlocked by PR-009 M1+M2 + PR-010 M4 fixes
 
 ---
 
@@ -127,7 +155,7 @@ CVA executor audit branch: ECS 85 → **95**. Gate 5c threshold remains 90. Immu
 
 | ID | Issue | Notes |
 |---|---|---|
-| M4 | Empty `control_requirements` for India non-NBFC non-BFSI profiles causes Skill 2 pre-check halt | Outside v0.9 fixture scope |
+| ~~M4~~ | ~~Capability discovery gap: Skill 1 control names zero-match CPM via substring → generic fallback cascade~~ | **Resolved (PR-010): knowledge bridge + suggested_capability field** |
 | M6 | `platform_coverage` boolean derived from `"Ethana" in coverage_classification` — silent failure if RWA format changes | Latent; no contract enforcement |
 
 ---
@@ -155,14 +183,14 @@ PR-008 — RWA L4 Certification                   ✓ COMPLETE
   │
 PR-009 — Documentation & Schema Repairs          ✓ COMPLETE
   │   M1/M2/M3/M5 resolved; 326/326 per-module; GRA AGENT.md; workflow updated
+  │
+PR-010 — Capability Discovery Repair             ✓ COMPLETE
+  │   M4 resolved; knowledge bridge; suggested_capability threaded; 352/352 per-module
   ↓
 CA End-to-End Validation                         ← NEXT MILESTONE
-  │   Immutable Audit Log path now viable (M1+M2 resolved)
-  │   v0.9 integration test: Audit-Log-surfacing EU BFSI input → COMPLETE
+  │   Immutable Audit Log path end-to-end viable (M1+M2+M4 all resolved)
+  │   v0.9 integration test: EU BFSI + LLM real-adapter run → COMPLETE
   │   M7 risk will manifest here; budget 1–2 weeks with M5 guard now in place
-  ↓
-PR-010 — Fixture Expansion
-  │   (ESM × 3, FM × 3)
   ↓
 PR-011 — Scorecard Compiler Integration
   ↓
@@ -182,7 +210,7 @@ Governance OS v0.9 Internal Tool
 | **Expected** | 4–5 weeks | CA end-to-end needs one iteration on M7 EPA calibration; PR-010/011 run in parallel |
 | **Conservative** | 6–7 weeks | M7 EPA scoring on concatenated governance markdown produces false-positive CFBs requiring explicit calibration ADR and executor change |
 
-**Primary bottleneck (updated):** CA end-to-end integration test. M1 and M2 are resolved. M7 (EPA scoring) and M5 (now guarded) are the remaining unknowns. The first real-adapter run will surface M7 behaviour.
+**Primary bottleneck (updated):** CA end-to-end integration test. M1, M2, and M4 are all resolved. M7 (EPA scoring on concatenated governance markdown) and M5 (now guarded) are the remaining unknowns. The first real-adapter run on EU BFSI + LLM input will surface M7 behaviour.
 
 ---
 
@@ -192,7 +220,7 @@ Governance OS v0.9 Internal Tool
 |---|---|---|
 | Architecture | Good | Sound design; Claims Firewall production-hardened; ADRs 7–9 document adapter boundary decisions |
 | Specification | Good | All 6 agents have AGENT.md; CA state-machine.md and workflow.yaml are authoritative; GRA AGENT.md added PR-009 |
-| Testing | Good | 326/326 per-module; 10 new tests for M1/M2/M5 adapter contracts; CVA ECS 95 asserted |
+| Testing | Good | 352/352 per-module; +26 PR-010 tests (T6 loader/covenant, T1 direct CPM path, T3 natural extraction); CVA ECS 95 asserted |
 | Documentation | Good | governance-assessment-workflow.md updated to 6-skill chain; CA AGENT.md stale blockers corrected |
 | Integration | Medium Risk | M1+M2 resolved; CA chain can reach Skill 6 on Audit-Log input; M7 unknown until first real run |
 | Production Readiness | Low | No API, no notifications, no deployment infrastructure, no Client Memory |
@@ -201,6 +229,6 @@ Governance OS v0.9 Internal Tool
 
 ## Next Milestone
 
-**CA End-to-End Validation:** first complete CA run using real adapters on Audit-Log-surfacing EU BFSI input → COMPLETE state → 12 artifacts. This is the blocker for v0.9 certification. M7 EPA behaviour will be exposed here.
+**CA End-to-End Validation:** first complete CA run using real adapters on EU BFSI + LLM input → COMPLETE state → 12 artifacts. M1, M2, and M4 are now all resolved — the Immutable Audit Log path is end-to-end viable without fixture injection. This is the blocker for v0.9 certification. M7 EPA behaviour will be exposed here.
 
-**Immediate action:** Design and execute the CA end-to-end integration test (T3). Use the EU AI Act Article 12 audit trail fixture (Immutable Audit Log surfaces in Skill 3; ECS 95 clears Gate 5c). Monitor Gate 6 for M7 EPA behaviour.
+**Immediate action:** Execute the CA end-to-end integration test (wire all 6 skills without lambda overrides). Use the EU AI Act Article 12 audit trail fixture (EU + BFSI + LLM: Human Oversight Gate → immutable audit log → ECS 95 clears Gate 5c). Monitor Gate 6 for M7 EPA scoring behaviour on concatenated governance markdown.

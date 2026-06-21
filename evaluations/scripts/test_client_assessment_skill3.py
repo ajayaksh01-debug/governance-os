@@ -248,5 +248,71 @@ class TestSkill3Adapter(Skill3Base):
             a.execute(sm, {}, self.lg)
 
 
+# ---------------------------------------------------------------------------
+# T1 — suggested_capability direct CPM lookup (PR-010)
+# ---------------------------------------------------------------------------
+
+class TestSkill3SuggestedCapability(Skill3Base):
+    """T1: Direct CPM lookup path via suggested_capability field (PR-010)."""
+
+    def _sc(self, name, classification, suggested_capability, control_type="Preventive"):
+        base = _control(name, classification, control_type)
+        base["suggested_capability"] = suggested_capability
+        return base
+
+    def test_t1a_immutable_audit_log_happy_path(self):
+        ctrl = self._sc(
+            "Human Oversight Gate",
+            "Fully Covered by Ethana",
+            "immutable audit log",
+            "Detective",
+        )
+        out = self._run([ctrl])
+        m = out["matched_capabilities"][0]
+        self.assertEqual(m["matched_capability"], "Immutable Audit Log")
+        self.assertEqual(m["capability_status"], "Production")
+        self.assertEqual(m["ccs_score"], 95)
+        self.assertEqual(m["disposition"], "Include in proposal")
+
+    def test_t1b_runtime_guardrails_happy_path(self):
+        ctrl = self._sc(
+            "Prompt Injection Filter",
+            "Fully Covered by Ethana",
+            "runtime guardrails",
+        )
+        out = self._run([ctrl])
+        m = out["matched_capabilities"][0]
+        self.assertEqual(m["matched_capability"], "Runtime Guardrails")
+        self.assertEqual(m["capability_status"], "Production")
+        self.assertGreaterEqual(m["ccs_score"], 90)
+
+    def test_t1c_empty_primary_falls_back_to_match_capability(self):
+        # Consent Verification has empty primary in Phase A → falls back to _match_capability()
+        ctrl = self._sc(
+            "Consent Verification",
+            "Partially Covered by Ethana",
+            "",
+        )
+        out = self._run([ctrl])
+        m = out["matched_capabilities"][0]
+        # Must not raise; disposition and ccs are consistent with partial classification
+        self.assertIsNotNone(m["matched_capability"])
+        self.assertIn("ccs_score", m)
+
+    def test_t1d_invalid_cpm_key_graceful_degradation(self):
+        # An invalid suggested_capability key must not raise; executor falls back to
+        # classification-based matched_capability with no CPM override.
+        ctrl = self._sc(
+            "Mystery Control",
+            "Fully Covered by Ethana",
+            "this-key-does-not-exist-in-cpm",
+        )
+        out = self._run([ctrl])
+        m = out["matched_capabilities"][0]
+        # Must not raise; matched_capability must not be the raw invalid key
+        self.assertNotEqual(m["matched_capability"], "this-key-does-not-exist-in-cpm")
+        self.assertIn("ccs_score", m)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
