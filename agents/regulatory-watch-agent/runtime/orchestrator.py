@@ -138,7 +138,7 @@ class Orchestrator:
         
         if validation_errors:
             # Check if it was an unsupported jurisdiction error
-            unsupported_jurisdiction = any("jurisdiction not in" in err.lower() for err in validation_errors)
+            unsupported_jurisdiction = any("unsupported jurisdiction" in err.lower() for err in validation_errors)
             if unsupported_jurisdiction:
                 state_mgr.transition_to("HALTED_INTAKE_UNSUPPORTED_JURISDICTION", f"Unsupported jurisdiction: {validation_errors}")
                 logger.log("INTAKE_VALIDATING", "HALTED", f"Intake halted due to unsupported jurisdiction: {validation_errors}")
