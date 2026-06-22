@@ -1,0 +1,459 @@
+governance-os/
+├── .claude/
+│   └── settings.local.json
+├── agents/
+│   ├── capability_validation_agent/
+│   │   ├── runtime/
+│   │   │   ├── contracts/
+│   │   │   │   └── capability_validation_output.json
+│   │   │   ├── logs/
+│   │   │   │   ├── TR-II-2026-0001_audit.jsonl
+│   │   │   │   ├── TR-II-2026-0002_audit.jsonl
+│   │   │   │   ├── TR-II-2026-0003_audit.jsonl
+│   │   │   │   ├── TR-PR-2026-0001_audit.jsonl
+│   │   │   │   ├── TR-PR-2026-0002_audit.jsonl
+│   │   │   │   ├── TR-PR-2026-0003_audit.jsonl
+│   │   │   │   ├── TR-PR-2026-0004_audit.jsonl
+│   │   │   │   ├── TR-PR-2026-0005_audit.jsonl
+│   │   │   │   └── TR-PR-2026-0006_audit.jsonl
+│   │   │   ├── packages/
+│   │   │   ├── runs/
+│   │   │   │   ├── TR-II-2026-0001_state.json
+│   │   │   │   ├── TR-II-2026-0002_state.json
+│   │   │   │   ├── TR-II-2026-0003_state.json
+│   │   │   │   ├── TR-PR-2026-0001_state.json
+│   │   │   │   ├── TR-PR-2026-0002_state.json
+│   │   │   │   ├── TR-PR-2026-0003_state.json
+│   │   │   │   ├── TR-PR-2026-0004_state.json
+│   │   │   │   ├── TR-PR-2026-0005_state.json
+│   │   │   │   └── TR-PR-2026-0006_state.json
+│   │   │   ├── audit_logger.py
+│   │   │   ├── config.yaml
+│   │   │   ├── orchestrator.py
+│   │   │   ├── output_builder.py
+│   │   │   ├── schema_validator.py
+│   │   │   ├── skill_executor.py
+│   │   │   └── state_manager.py
+│   │   └── AGENT.md
+│   ├── client-assessment-agent/
+│   │   ├── runtime/
+│   │   │   ├── logs/
+│   │   │   │   ├── TR-CA-2026-4216_audit.jsonl
+│   │   │   │   ├── TR-CA-2026-7231_audit.jsonl
+│   │   │   │   └── TR-CA-2026-8631_audit.jsonl
+│   │   │   ├── packages/
+│   │   │   ├── runs/
+│   │   │   │   ├── TR-CA-2026-4216_state.json
+│   │   │   │   ├── TR-CA-2026-7231_state.json
+│   │   │   │   └── TR-CA-2026-8631_state.json
+│   │   │   ├── skills/
+│   │   │   │   ├── feature_mapping_executor.py
+│   │   │   │   ├── iso42001_executor.py
+│   │   │   │   └── solution_mapping_executor.py
+│   │   │   ├── audit_logger.py
+│   │   │   ├── config.yaml
+│   │   │   ├── orchestrator.py
+│   │   │   ├── output_builder.py
+│   │   │   ├── schema_validator.py
+│   │   │   ├── skill_adapters.py
+│   │   │   ├── skill_executor.py
+│   │   │   └── state_manager.py
+│   │   ├── AGENT.md
+│   │   ├── evaluation.md
+│   │   ├── state-machine.md
+│   │   └── workflow.yaml
+│   ├── ethana_proposal_agent/
+│   │   ├── runtime/
+│   │   │   ├── logs/
+│   │   │   │   ├── ctcs-audit_audit.jsonl
+│   │   │   │   ├── synthetic-proof_audit.jsonl
+│   │   │   │   ├── test-clean_audit.jsonl
+│   │   │   │   ├── test-mixed-corrected_audit.jsonl
+│   │   │   │   └── test-proposal-run_audit.jsonl
+│   │   │   ├── packages/
+│   │   │   ├── runs/
+│   │   │   │   ├── ctcs-audit_state.json
+│   │   │   │   ├── synthetic-proof_state.json
+│   │   │   │   ├── test-clean_state.json
+│   │   │   │   ├── test-mixed-corrected_state.json
+│   │   │   │   └── test-proposal-run_state.json
+│   │   │   ├── audit_logger.py
+│   │   │   ├── config.yaml
+│   │   │   ├── orchestrator.py
+│   │   │   ├── output_builder.py
+│   │   │   ├── schema_validator.py
+│   │   │   ├── skill_executor.py
+│   │   │   └── state_manager.py
+│   │   └── AGENT.md
+│   ├── governance_review_agent/
+│   │   ├── runtime/
+│   │   │   ├── logs/
+│   │   │   ├── packages/
+│   │   │   ├── runs/
+│   │   │   ├── audit_logger.py
+│   │   │   ├── config.yaml
+│   │   │   ├── orchestrator.py
+│   │   │   ├── output_builder.py
+│   │   │   ├── schema_validator.py
+│   │   │   ├── skill_executor.py
+│   │   │   └── state_manager.py
+│   │   └── AGENT.md
+│   ├── incident_intelligence_agent/
+│   │   ├── runtime/
+│   │   │   ├── logs/
+│   │   │   ├── packages/
+│   │   │   ├── runs/
+│   │   │   ├── audit_logger.py
+│   │   │   ├── config.yaml
+│   │   │   ├── orchestrator.py
+│   │   │   ├── output_builder.py
+│   │   │   ├── schema_validator.py
+│   │   │   ├── skill_executor.py
+│   │   │   └── state_manager.py
+│   │   └── AGENT.md
+│   ├── regulatory-watch-agent/
+│   │   ├── runtime/
+│   │   │   ├── contracts/
+│   │   │   │   ├── governance_control_output.json
+│   │   │   │   └── regulatory_mapping_output.json
+│   │   │   ├── logs/
+│   │   │   │   ├── TR-II-2026-0001_audit.jsonl
+│   │   │   │   ├── TR-II-2026-0002_audit.jsonl
+│   │   │   │   ├── TR-II-2026-0003_audit.jsonl
+│   │   │   │   ├── TR-II-2026-0004_audit.jsonl
+│   │   │   │   ├── TR-II-2026-0005_audit.jsonl
+│   │   │   │   ├── TR-II-2026-0006_audit.jsonl
+│   │   │   │   ├── TR-II-2026-0007_audit.jsonl
+│   │   │   │   ├── TR-II-2026-0008_audit.jsonl
+│   │   │   │   ├── TR-II-2026-0009_audit.jsonl
+│   │   │   │   ├── TR-II-2026-0010_audit.jsonl
+│   │   │   │   ├── TR-II-2026-0011_audit.jsonl
+│   │   │   │   └── TR-II-2026-0012_audit.jsonl
+│   │   │   ├── packages/
+│   │   │   │   └── TR-RW-TEST-9999/
+│   │   │   ├── runs/
+│   │   │   │   ├── TR-II-2026-0001_state.json
+│   │   │   │   ├── TR-II-2026-0002_state.json
+│   │   │   │   ├── TR-II-2026-0003_state.json
+│   │   │   │   ├── TR-II-2026-0004_state.json
+│   │   │   │   ├── TR-II-2026-0005_state.json
+│   │   │   │   ├── TR-II-2026-0006_state.json
+│   │   │   │   ├── TR-II-2026-0007_state.json
+│   │   │   │   ├── TR-II-2026-0008_state.json
+│   │   │   │   ├── TR-II-2026-0009_state.json
+│   │   │   │   ├── TR-II-2026-0010_state.json
+│   │   │   │   ├── TR-II-2026-0011_state.json
+│   │   │   │   └── TR-II-2026-0012_state.json
+│   │   │   ├── README.md
+│   │   │   ├── audit_logger.py
+│   │   │   ├── config.yaml
+│   │   │   ├── orchestrator.py
+│   │   │   ├── output_builder.py
+│   │   │   ├── schema_validator.py
+│   │   │   ├── skill_executor.py
+│   │   │   └── state_manager.py
+│   │   ├── AGENT.md
+│   │   ├── evaluation.md
+│   │   ├── state-machine.md
+│   │   └── workflow.yaml
+├── chutkii-review/
+│   └── repo-tree.txt
+├── docs/
+│   ├── architecture/
+│   │   ├── agent-readiness-audit.md
+│   │   ├── agent-readiness-remediation.md
+│   │   ├── capability-validation-certification-report.md
+│   │   ├── capability-validation-implementation-report.md
+│   │   ├── capability-validation-runtime-architecture.md
+│   │   ├── certification-integrity-review.md
+│   │   ├── claims-linter-hardening-review.md
+│   │   ├── claims-linter-hardening-validation.md
+│   │   ├── firewall-final-verification.md
+│   │   ├── firewall-remediation-report.md
+│   │   ├── incident-intelligence-certification-report.md
+│   │   ├── incident-intelligence-gap-analysis.md
+│   │   ├── incident-intelligence-implementation-report.md
+│   │   ├── incident-intelligence-rca-hq3.md
+│   │   ├── incident-intelligence-runtime-architecture.md
+│   │   ├── incident-intelligence-verification-report.md
+│   │   ├── next-skill-prioritization.md
+│   │   ├── post-cleanup-validation.md
+│   │   ├── proposal-review-certification-report.md
+│   │   ├── proposal-review-implementation-report.md
+│   │   ├── proposal-review-runtime-architecture.md
+│   │   ├── proposal-review-verification-report.md
+│   │   ├── proposal-runtime-gap-analysis.md
+│   │   ├── proposal-runtime-integrity-audit.md
+│   │   ├── regulatory-watch-agent-architecture.md
+│   │   ├── regulatory-watch-certification-remediation.md
+│   │   ├── repository-assessment.md
+│   │   ├── repository-maturity-review.md
+│   │   ├── repository-readiness-review.md
+│   │   ├── repository-skill-architecture.md
+│   │   ├── repository-skill-dependency-graph.md
+│   │   ├── runtime-v02-capability-audit.md
+│   │   ├── runtime-v02-gap-analysis.md
+│   │   └── runtime-v02-implementation-report.md
+│   ├── archive/
+│   │   ├── audit-history/
+│   │   │   ├── governance-capability-audit 1.md
+│   │   │   ├── governance-capability-audit_ 2.md
+│   │   │   ├── managed-agents-audit_ 1.md
+│   │   │   ├── managed-agents-audit_2.md
+│   │   │   ├── repository-architecture-audit_1.md
+│   │   │   └── repository-architecture-audit_2.md
+│   │   └── ethana-status-history/
+│   │       ├── capability-status.md
+│   │       ├── ethana-status-reconciliation.md
+│   │       └── source-of-truth.md
+│   ├── audits/
+│   │   ├── audit-inventory.md
+│   │   ├── consolidation-log.md
+│   │   ├── governance-capability-audit.md
+│   │   ├── managed-agents-audit.md
+│   │   └── repository-architecture-audit.md
+│   ├── decisions/
+│   │   ├── ADR-001-canonical-product-model.md
+│   │   ├── ADR-002-claims-firewall.md
+│   │   ├── ADR-003-skills-vs-workflows.md
+│   │   ├── ADR-004-primary-source-evidence.md
+│   │   ├── ADR-005-proposal-review-gate.md
+│   │   ├── ADR-006-governance-review-terminal-gate.md
+│   │   ├── ADR-007-skill5-capability-source.md
+│   │   ├── ADR-008-gate5-ecs-calibration.md
+│   │   ├── ADR-009-ecs-general-fallback-calibration.md
+│   │   ├── ADR-INDEX.md
+│   │   ├── PR-003-feature-mapping-schema-contract-repair.md
+│   │   ├── PR-004-feature-mapping-proposal-review-integration-test.md
+│   │   ├── PR-008-regulatory-watch-agent-l4-readiness.md
+│   │   ├── PR-009-documentation-schema-and-adapter-repairs.md
+│   │   ├── PR-010-capability-discovery-repair.md
+│   │   └── decision-traceability-matrix.md
+│   ├── diagrams/
+│   ├── handoffs/
+│   │   ├── HANDOFF_PR005_PRE_IMPLEMENTATION.md
+│   │   └── HANDOFF_PR006_POST_PHASE3.md
+│   ├── implementation/
+│   │   ├── evaluation-layer-review.md
+│   │   ├── implementation-status.md
+│   │   └── regulatory-mapping-remediation.md
+│   ├── roadmaps/
+│   │   ├── governance-os-release-plan.md
+│   │   └── v1-internal-tool-roadmap.md
+├── evaluations/
+│   ├── baselines/
+│   │   ├── ai-incident-analysis/
+│   │   │   └── structure.json
+│   │   ├── ethana-feature-mapping/
+│   │   │   └── structure.json
+│   │   ├── ethana-solution-mapping/
+│   │   │   └── structure.json
+│   │   ├── governance-control-mapping/
+│   │   │   └── structure.json
+│   │   ├── governance-review/
+│   │   │   └── structure.json
+│   │   ├── regulatory-mapping/
+│   │   │   └── structure.json
+│   │   ├── ethana-capability-validation-baseline.md
+│   │   ├── ethana-proposal-review-baseline.md
+│   │   └── iso-42001-gap-assessment-baseline.md
+│   ├── scripts/
+│   │   ├── agent_certifier.py
+│   │   ├── claims_linter.py
+│   │   ├── conftest.py
+│   │   ├── regression_tester.py
+│   │   ├── scorecard_compiler.py
+│   │   ├── test_capability_validation_runtime.py
+│   │   ├── test_client_assessment_adapters.py
+│   │   ├── test_client_assessment_runtime.py
+│   │   ├── test_client_assessment_skill3.py
+│   │   ├── test_client_assessment_skill4.py
+│   │   ├── test_client_assessment_skill_fm.py
+│   │   ├── test_control_capability_map.py
+│   │   ├── test_feature_mapping_proposal_review_integration.py
+│   │   ├── test_firewall_hardening.py
+│   │   ├── test_governance_review_runtime.py
+│   │   ├── test_incident_intelligence_runtime.py
+│   │   ├── test_proposal_review_runtime.py
+│   │   ├── test_regulatory_watch_runtime.py
+│   │   └── workflow_validator.py
+│   ├── test-cases/
+│   │   ├── ethana-capability-validation/
+│   │   │   ├── mixed-status-capability-request.md
+│   │   │   ├── production-capability-request.md
+│   │   │   └── roadmap-capability-request.md
+│   │   ├── gold-standards/
+│   │   │   ├── eu-ai-act-high-risk-banking-gold-standard.md
+│   │   │   ├── india-dpdp-customer-support-ai-gold-standard.md
+│   │   │   └── uk-insurance-claims-model-gold-standard.md
+│   │   ├── governance-review/
+│   │   │   ├── conditional-governance-axiom-fintech.md
+│   │   │   ├── governance-ready-meridian-bank.md
+│   │   │   └── not-governance-ready-apex-agency.md
+│   │   ├── incident-reports/
+│   │   │   ├── amazon-bias.json
+│   │   │   ├── samsung-leak.json
+│   │   │   └── slack-prompt-injection.json
+│   │   ├── iso-42001-gap-assessment/
+│   │   │   ├── bank-certification-readiness.md
+│   │   │   ├── fintech-extension-from-iso27001.md
+│   │   │   └── greenfield-organisation.md
+│   │   ├── proposal-review/
+│   │   │   ├── clean-proposal.md
+│   │   │   ├── firewall-breach.md
+│   │   │   └── mixed-roadmap-claims.md
+│   │   ├── regulatory-subjects/
+│   │   │   ├── eu-ai-act-high-risk-banking.md
+│   │   │   ├── india-dpdp-customer-support-ai.md
+│   │   │   ├── minimal-risk-internal-tool.md
+│   │   │   └── uk-insurance-claims-model.md
+│   │   └── readme.md
+│   └── evaluation-index.md
+├── knowledge/
+│   ├── ai-incidents/
+│   │   ├── ai-hiring-bot-incident.md
+│   │   ├── chatgpt-data-exposure.md
+│   │   ├── mcp-vulnerability-risks.md
+│   │   ├── prompt-injection-examples.md
+│   │   └── samsung-source-code-leak.md
+│   ├── bfsi/
+│   │   ├── banking-ai-governance-use-cases.md
+│   │   ├── gcc-ai-governance-patterns.md
+│   │   ├── insurance-ai-governance.md
+│   │   └── wealth-management-ai-governance.md
+│   ├── controls/
+│   │   ├── agent-governance-controls.md
+│   │   ├── audit-controls.md
+│   │   ├── data-protection-controls.md
+│   │   ├── model-risk-controls.md
+│   │   └── prompt-injection-controls.md
+│   ├── ethana/
+│   │   ├── mnt/
+│   │   │   └── user-data/
+│   │   │       └── outputs/
+│   │   ├── README.md
+│   │   ├── ai-gateway.md
+│   │   ├── boundaries.md
+│   │   ├── buyer-persona-playbook.md
+│   │   ├── buyer-solution-mapping.md
+│   │   ├── canonical-product-model.md
+│   │   ├── claims-matrix.md
+│   │   ├── competitive-positioning.md
+│   │   ├── competitor-positioning.md
+│   │   ├── control-capability-map.md
+│   │   ├── cost-controls.md
+│   │   ├── demo-strategy.md
+│   │   ├── deployment-and-certifications.md
+│   │   ├── ethana-status-harmonization.md
+│   │   ├── evidence-based-status-review.md
+│   │   ├── framework-crosswalk.md
+│   │   ├── guardrails.md
+│   │   ├── immutable-audit-logs.md
+│   │   ├── mcp-security.md
+│   │   ├── overview.md
+│   │   ├── primary-source-validation.md
+│   │   ├── product-architecture-investigation.md
+│   │   ├── red-teaming.md
+│   │   ├── sales-objection-handling.md
+│   │   ├── services-catalog.md
+│   │   └── use-cases.md
+│   ├── frameworks/
+│   │   ├── iso-42001.md
+│   │   ├── nist-ai-rmf.md
+│   │   └── owasp-llm-top-10.md
+│   ├── regulations/
+│   │   ├── eu-ai-act.md
+│   │   ├── india-ai-landscape.md
+│   │   └── uk-ai-guidance.md
+├── reviews/
+│   ├── governance-os-master-status.md
+│   └── governance-os-program-review-2026-06-21.md
+├── skills/
+│   ├── ai-incident-analysis/
+│   │   ├── SKILL.md
+│   │   ├── evaluation.md
+│   │   ├── examples.md
+│   │   └── workflow.md
+│   ├── ethana-capability-validation/
+│   │   ├── SKILL.md
+│   │   ├── evaluation.md
+│   │   ├── examples.md
+│   │   └── workflow.md
+│   ├── ethana-feature-mapping/
+│   │   ├── SKILL.md
+│   │   ├── evaluation.md
+│   │   ├── examples.md
+│   │   └── workflow.md
+│   ├── ethana-proposal-review/
+│   │   ├── SKILL.md
+│   │   ├── evaluation.md
+│   │   ├── examples.md
+│   │   └── workflow.md
+│   ├── ethana-solution-mapping/
+│   │   ├── SKILL.md
+│   │   ├── evaluation.md
+│   │   ├── examples.md
+│   │   └── workflow.md
+│   ├── governance-control-mapping/
+│   │   ├── SKILL.md
+│   │   ├── evaluation.md
+│   │   ├── examples.md
+│   │   └── workflow.md
+│   ├── governance-review/
+│   │   ├── SKILL.md
+│   │   ├── evaluation.md
+│   │   └── examples.md
+│   ├── iso-42001-gap-assessment/
+│   │   ├── SKILL.md
+│   │   ├── evaluation.md
+│   │   ├── examples.md
+│   │   └── workflow.md
+│   ├── regulatory-mapping/
+│   │   ├── SKILL.md
+│   │   ├── evaluation.md
+│   │   ├── examples.md
+│   │   └── workflow.md
+├── source-material/
+│   ├── Ethana_Feature_Led_BD play bookTracker V3.xlsx
+│   ├── Ethana_Marketing_Playbook_Ajay.docx
+│   ├── Ethana_Marketing_Playbook_Ajay.txt
+│   ├── README.md
+│   ├── Study ethana.docx
+│   ├── Study ethana.txt
+│   ├── ai-gateway.md
+│   ├── boundaries.md
+│   ├── buyer-solution-mapping.md
+│   ├── capability-status.md
+│   ├── cost-controls.md
+│   ├── deployment-and-certifications.md
+│   ├── ethana-board-briefing.pdf
+│   ├── framework-crosswalk.md
+│   ├── guardrails.md
+│   ├── immutable-audit-logs.md
+│   ├── mcp-security.md
+│   ├── overview.md
+│   ├── red-teaming.md
+│   └── services-catalog.md
+├── workflows/
+│   ├── schemas/
+│   │   ├── control_mapping_output.json
+│   │   ├── ethana-capability-validation-output.schema.json
+│   │   ├── feature_mapping_output.json
+│   │   ├── governance-review-input.schema.json
+│   │   ├── governance-review-output.schema.json
+│   │   ├── incident_analysis_output.json
+│   │   ├── incident_assessment_input.schema.json
+│   │   ├── iso-42001-gap-assessment-input.schema.json
+│   │   ├── iso-42001-gap-assessment-output.schema.json
+│   │   ├── proposal-review-input.schema.json
+│   │   ├── proposal-review-output.schema.json
+│   │   ├── regulatory_mapping_output.json
+│   │   └── solution_mapping_output.json
+│   ├── README.md
+│   ├── ethana-solution-design-workflow.md
+│   ├── governance-assessment-workflow.md
+│   ├── incident-assessment-workflow.md
+│   ├── proposal-development-workflow.md
+│   └── regulatory-compliance-workflow.md
+├── .gitignore
+└── README.md
